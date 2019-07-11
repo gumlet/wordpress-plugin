@@ -310,21 +310,16 @@ class Gumlet {
 		$params = [];
 
 		// For now, only "auto" is supported.
-		$auto = [];
 		if ( ! empty ( $this->options['auto_format'] ) ) {
-			array_push( $auto, 'format' );
+			$params["format"] = "auto";
 		}
 
-		if ( ! empty ( $this->options['auto_enhance'] ) ) {
-			array_push( $auto, 'enhance' );
-		}
+		// if ( ! empty ( $this->options['auto_enhance'] ) ) {
+		// 	array_push( $auto, 'enhance' );
+		// }
 
 		if ( ! empty ( $this->options['auto_compress'] ) ) {
-			array_push( $auto, 'compress' );
-		}
-
-		if ( ! empty( $auto ) ) {
-			$params['auto'] = implode( '%2C', $auto );
+			$params["compress"] = "true";
 		}
 
 		return $params;
