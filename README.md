@@ -5,7 +5,6 @@ Official WordPress plugin to automatically load all your existing (and future) W
 
 * [Features](#features)
 * [Getting Started](#getting-started)
-* [History](#history)
 * [Testing](#testing)
 
 <a name="features"></a>
