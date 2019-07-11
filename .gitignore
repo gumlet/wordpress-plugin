@@ -1,0 +1,5 @@
+node_modules/
+gumlet_plugin-*.zip
+.DS_Store
+/vendor/
+/composer.lock

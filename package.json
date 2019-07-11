@@ -1,0 +1,14 @@
+{
+  "name": "gumlet-wordpress",
+  "version": "1.0.0",
+  "description": "official Gumlet WordPress plugin",
+  "main": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Gumlet",
+  "license": "BSD-2",
+  "dependencies": {
+    "grunt": "^0.4.5"
+  }
+}
