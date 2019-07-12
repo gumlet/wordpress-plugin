@@ -44,7 +44,7 @@ class Gumlet_Options_Page {
 		<div class="wrap">
 
 			<h1>
-				<img src="https://demo.gumlet.com/logo.png?w=400" style="width: 200px;" alt="Gumlet Logo">
+				<img src="<?php echo plugins_url( 'assets/images/gumlet-logo.png', __DIR__ ); ?>" alt="gumlet Logo">
 			</h1>
 
 			<p><strong>Need help getting started?</strong> It's easy! Check out our
