@@ -45,4 +45,4 @@ Qustions? Email support@gumlet.com
 
 == Screenshots ==
 
-No Screenshots are available.
+1. Gumlet Settings Panel
