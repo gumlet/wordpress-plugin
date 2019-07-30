@@ -39,9 +39,6 @@ class Gumlet {
 
 		add_filter( 'the_content', [ $this, 'replace_images_in_content' ] );
 		add_action( 'wp_head', [ $this, 'prefetch_cdn' ], 1 );
-
-		add_action( 'after_setup_theme', [ $this, 'buffer_start_for_retina' ] );
-		add_action( 'shutdown', [ $this, 'buffer_end_for_retina' ], 0 );
 	}
 
 	/**
@@ -88,23 +85,6 @@ class Gumlet {
 		$this->options = $options;
 	}
 
-	/**
-	 * Find all img tags with sources matching "gumlet.com" without the parameter
-	 * "srcset" and add the "srcset" parameter to all those images, appending a new
-	 * source using the "dpr=2" modifier.
-	 *
-	 * @param $content
-	 *
-	 * @return string Content with retina-enriched image tags.
-	 */
-	public function add_retina( $content ) {
-		$pattern = '/<img((?![^>]+srcset )([^>]*)';
-		$pattern .= 'src=[\'"]([^\'"]*gumlet.com[^\'"]*\?[^\'"]*w=[^\'"]*)[\'"]([^>]*)*?)>/i';
-		$repl    = '<img$2src="$3" srcset="${3}, ${3}&amp;dpr=2 2x, ${3}&amp;dpr=3 3x,"$4>';
-		$content = preg_replace( $pattern, $repl, $content );
-
-		return preg_replace( $pattern, $repl, $content );
-	}
 
 	/**
 	 * Modify image urls for attachments to use gumlet host.
@@ -211,18 +191,18 @@ class Gumlet {
 	 */
 	public function calculate_image_srcset( $sources, $size_array, $image_src, $image_meta, $attachment_id ) {
 		if ( ! empty ( $this->options['cdn_link'] ) ) {
-			foreach ( $sources as $i => $image_size ) {
-				if ( $image_size['descriptor'] === 'w' ) {
-					if ( $attachment_id ) {
-						$image_src = wp_get_attachment_url( $attachment_id );
-					}
+			$widths = array(30,50,100,200,300,320,400,500,576,600,640,700,720,750,768,800,900,940,1000,1024,1080,1100,1140,1152,1200,1242,1300,1400,1440,1442,1500,1536,1600,1700,1800,1880,1900,1920,2000,2048,2100,2200,2208,2280,2300,2400,2415,2500,2560,2600,2700,2732,2800,2880,2900,3000,3100,3200,3300,3400,3500,3600,3700,3800,3900,4000,4100,4200,4300,4400,4500,4600,4700,4800,4900,5000,5100,5120);
 
-					$image_src            = remove_query_arg( 'h', $image_src );
-					$sources[ $i ]['url'] = add_query_arg( 'w', $image_size['value'], $image_src );
+			foreach ( $widths as $width ) {
+				if ( $attachment_id ) {
+					$image_src = wp_get_attachment_url( $attachment_id );
 				}
+				$image_src            = remove_query_arg( 'h', $image_src );
+				$sources[ $width ]['url'] = add_query_arg( 'w', $width, $image_src );
+				$sources[ $width ]['descriptor'] = 'w';
+				$sources[ $width ]['value'] = $width;
 			}
 		}
-
 		return $sources;
 	}
 
@@ -243,12 +223,11 @@ class Gumlet {
 			}
 
 			if ( preg_match_all( '/<img\s[^>]*srcset=([\"\']??)([^\">]*?)\1[^>]*\/?>/iU', $content, $matches ) ) {
-
 				foreach ( $matches[2] as $image_srcset ) {
+					preg_match_all('/(\S+)(\s\d+\w)/', $image_srcset, $srcset_matches);
 					$new_image_srcset = preg_replace_callback( '/(\S+)(\s\d+\w)/', function ( $srcset_matches ) {
 						return apply_filters( 'wp_get_attachment_url', $srcset_matches[1], null ) . $srcset_matches[2];
 					}, $image_srcset );
-
 					$content = str_replace( $image_srcset, $new_image_srcset, $content );
 				}
 			}
@@ -259,6 +238,7 @@ class Gumlet {
 				}
 			}
 
+			// this replaces background URLs
       if ( preg_match_all('/url\(([\s])?([\"|\'])?(.*?)([\"|\'])?([\s])?\)/i', $content, $matches ) ) {
         foreach ( $matches[3] as $image_src ) {
           $content = str_replace( $image_src, apply_filters( 'wp_get_attachment_url', $image_src, null ), $content );
@@ -279,24 +259,6 @@ class Gumlet {
 				'<link rel="dns-prefetch" href="%s"/>',
 				esc_attr( '//' . $host )
 			);
-		}
-	}
-
-	/**
-	 * Start output buffer if auto retina is enabled
-	 */
-	public function buffer_start_for_retina() {
-		if ( ! empty ( $this->options['add_dpi2_srcset'] ) ) {
-			$this->buffer_started = ob_start( [ $this, 'add_retina' ] );
-		}
-	}
-
-	/**
-	 * Stop output buffer if it was enabled by the plugin
-	 */
-	public function buffer_end_for_retina() {
-		if ( $this->buffer_started && ob_get_level() ) {
-			ob_end_flush();
 		}
 	}
 

@@ -87,14 +87,6 @@ class Gumlet_Options_Page {
 								<input id="gumlet_settings[auto_compress]" type="checkbox" name="gumlet_settings[auto_compress]" value="1" <?php checked( $this->get_option( 'auto_compress' ) ) ?> />
 							</td>
 						</tr>
-						<tr>
-							<th>
-								<label class="description" for="gumlet_settings[add_dpi2_srcset]"><?php esc_html_e( 'Automatically add retina images using srcset', 'gumlet' ); ?></label>
-							</th>
-							<td>
-								<input id="gumlet_settings[add_dpi2_srcset]" type="checkbox" name="gumlet_settings[add_dpi2_srcset]" value="1" <?php checked( $this->get_option( 'add_dpi2_srcset' ) ) ?> />
-							</td>
-						</tr>
 					</tbody>
 				</table>
 
