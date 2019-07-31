@@ -11,7 +11,7 @@
  * Plugin Name: Gumlet
  * Plugin URI:  https://github.com/gumlet/wordpress-plugin
  * Description: A WordPress plugin to automatically use your existing (and future) WordPress images from <a href="http://www.gumlet.com" target="_blank">Gumlet</a> for smaller, faster, and better looking images. <a href="https://github.com/gumlet/wordpress-plugin" target="_blank">Learn more</a>.
- * Version:     1.0.3
+ * Version:     1.0.4
  * Author:      Gumlet
  * Author URI:  https://www.gumlet.com
  */

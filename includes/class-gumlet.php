@@ -276,6 +276,10 @@ class Gumlet {
 			$params["format"] = "auto";
 		}
 
+		if ( ! empty ( $this->options['quality'] ) ) {
+			$params["quality"] = $this->options['quality'];
+		}
+
 		// if ( ! empty ( $this->options['auto_enhance'] ) ) {
 		// 	array_push( $auto, 'enhance' );
 		// }

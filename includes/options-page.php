@@ -87,6 +87,14 @@ class Gumlet_Options_Page {
 								<input id="gumlet_settings[auto_compress]" type="checkbox" name="gumlet_settings[auto_compress]" value="1" <?php checked( $this->get_option( 'auto_compress' ) ) ?> />
 							</td>
 						</tr>
+						<tr>
+							<th>
+								<label class="description" for="gumlet_settings[quality]"><?php esc_html_e( 'Image Quality', 'gumlet' ); ?></label>
+							</th>
+							<td>
+								<input id="gumlet_settings[quality]" type="number" name="gumlet_settings[quality]" value="80" <?php checked( $this->get_option( 'quality' ) ) ?> />
+							</td>
+						</tr>
 					</tbody>
 				</table>
 

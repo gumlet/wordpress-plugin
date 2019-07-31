@@ -4,7 +4,7 @@ Contributors: adityapatadia
 Tags: images, image management, image manipulation, image optimization, image optimisation, gumlet, wepb,photo, photos, picture, pictures, thumbnail, thumbnails, upload, batch, cdn, content delivery network
 Requires at least: 3.3
 Tested up to: 5.2.2
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 License: BSD-2
 License URI: http://opensource.org/licenses/BSD-2-Clause
 
