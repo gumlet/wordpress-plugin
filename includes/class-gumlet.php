@@ -165,8 +165,13 @@ class Gumlet {
 				$meta   = wp_get_attachment_metadata( $attachment_id );
 
 				// Image sizes is missing for pdf thumbnails
-				$meta['width']  = isset( $meta['width'] ) ? $meta['width'] : 0;
-				$meta['height'] = isset( $meta['height'] ) ? $meta['height'] : 0;
+				if($meta) {
+					$meta['width']  = isset( $meta['width'] ) ? $meta['width'] : 0;
+					$meta['height'] = isset( $meta['height'] ) ? $meta['height'] : 0;
+				} else {
+					$meta = array("width" => 0, "height" => 0);
+				}
+
 
 				$width  = isset( $width ) ? $width : $meta['width'];
 				$height = isset( $height ) ? $height : $meta['height'];
