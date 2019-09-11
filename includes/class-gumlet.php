@@ -1,328 +1,355 @@
 <?php
 
-class Gumlet {
+class Gumlet
+{
 
-	/**
-	 * The instance of the class.
-	 *
-	 * @var Gumlet
-	 */
-	protected static $instance;
+    /**
+     * The instance of the class.
+     *
+     * @var Gumlet
+     */
+    protected static $instance;
 
-	/**
-	 * Plugin options
-	 *
-	 * @var array
-	 */
-	protected $options = [];
+    /**
+     * Plugin options
+     *
+     * @var array
+     */
+    protected $options = [];
 
-	/**
-	 * Buffer is started by plugin and should be ended on shutdown.
-	 *
-	 * @var bool
-	 */
-	protected $buffer_started = false;
+    /**
+     * Buffer is started by plugin and should be ended on shutdown.
+     *
+     * @var bool
+     */
+    protected $buffer_started = false;
 
-	/**
-	 * Gumlet constructor.
-	 */
-	public function __construct() {
-		$this->options = get_option( 'gumlet_settings', [] );
+    /**
+     * Gumlet constructor.
+     */
+    public function __construct()
+    {
+        $this->options = get_option('gumlet_settings', []);
 
-		// Change filter load order to ensure it loads after other CDN url transformations i.e. Amazon S3 which loads at position 99.
-		add_filter( 'wp_get_attachment_url', [ $this, 'replace_image_url' ], 100 );
-		add_filter( 'gumlet/add-image-url', [ $this, 'replace_image_url' ] );
+        // Change filter load order to ensure it loads after other CDN url transformations i.e. Amazon S3 which loads at position 99.
+        add_filter('wp_get_attachment_url', [ $this, 'replace_image_url' ], 100);
+        add_filter('gumlet/add-image-url', [ $this, 'replace_image_url' ]);
 
-		add_filter( 'image_downsize', [ $this, 'image_downsize' ], 10, 3 );
+        add_filter('image_downsize', [ $this, 'image_downsize' ], 10, 3);
 
-		add_filter( 'wp_calculate_image_srcset', [ $this, 'calculate_image_srcset' ], 10, 5 );
+        add_filter('wp_calculate_image_srcset', [ $this, 'calculate_image_srcset' ], 10, 5);
 
-		add_filter( 'the_content', [ $this, 'replace_images_in_content' ] );
-		add_action( 'wp_head', [ $this, 'prefetch_cdn' ], 1 );
-	}
+        add_filter('the_content', [ $this, 'replace_images_in_content' ]);
+        add_action('wp_head', [ $this, 'add_links_and_scripts' ], 1);
+    }
 
-	/**
-	 * Plugin loader instance.
-	 *
-	 * @return Gumlet
-	 */
-	public static function instance() {
-		if ( ! isset( self::$instance ) ) {
-			self::$instance = new self;
-		}
-
-		return self::$instance;
-	}
-
-	/**
-	 * Set a single option.
-	 *
-	 * @param string $key
-	 * @param mixed $value
-	 */
-	public function set_option( $key, $value ) {
-		$this->options[ $key ] = $value;
-	}
-
-	/**
-	 * Get a single option.
-	 *
-	 * @param  string $key
-	 * @param  mixed $default
-	 * @return mixed
-	 */
-	public function get_option( $key, $default = '' ) {
-		return array_key_exists( $key, $this->options ) ? $this->options[ $key ] : $default;
-	}
-
-	/**
-	 * Override options from settings.
-	 * Used in unit tests.
-	 *
-	 * @param array $options
-	 */
-	public function set_options( $options ) {
-		$this->options = $options;
-	}
-
-
-	/**
-	 * Modify image urls for attachments to use gumlet host.
-	 *
-	 * @param string $url
-	 *
-	 * @return string
-	 */
-	public function replace_image_url( $url ) {
-		if ( ! empty ( $this->options['cdn_link'] ) ) {
-			$parsed_url = parse_url( $url );
-
-			//Check if image is hosted on current site url -OR- the CDN url specified. Using strpos because we're comparing the host to a full CDN url.
-			if (
-				isset( $parsed_url['host'], $parsed_url['path'] )
-				&& ($parsed_url['host'] === parse_url( home_url( '/' ), PHP_URL_HOST ) || ( isset($this->options['external_cdn_link']) && ! empty($this->options['external_cdn_link']) && strpos( $this->options['external_cdn_link'], $parsed_url['host']) !== false ) )
-				&& preg_match( '/\.(jpg|jpeg|gif|png)$/i', $parsed_url['path'] )
-			) {
-				$cdn = parse_url( $this->options['cdn_link'] );
-
-				foreach ( [ 'scheme', 'host', 'port' ] as $url_part ) {
-					if ( isset( $cdn[ $url_part ] ) ) {
-						$parsed_url[ $url_part ] = $cdn[ $url_part ];
-					} else {
-						unset( $parsed_url[ $url_part ] );
-					}
-				}
-
-				if ( ! empty( $this->options['external_cdn_link'] ) ) {
-					$cdn_path = parse_url( $this->options['external_cdn_link'],  PHP_URL_PATH );
-
-					if ( isset( $cdn_path, $parsed_url['path'] ) && $cdn_path !== '/' && ! empty( $parsed_url['path'] ) ) {
-						$parsed_url['path'] = str_replace( $cdn_path, '', $parsed_url['path'] );
-					}
-				}
-
-				$url = http_build_url( $parsed_url );
-
-				$url = add_query_arg( $this->get_global_params(), $url );
-			}
-		}
-
-		return $url;
-	}
-
-	/**
-	 * Set params when running image_downsize
-	 *
-	 * @param false|array  $return
-	 * @param int          $attachment_id
-	 * @param string|array $size
-	 *
-	 * @return false|array
-	 */
-	public function image_downsize( $return, $attachment_id, $size ) {
-		if ( ! empty ( $this->options['cdn_link'] ) ) {
-			$img_url = wp_get_attachment_url( $attachment_id );
-
-			$params = [];
-			if ( is_array( $size ) ) {
-				$params['w'] = $width = isset( $size[0] ) ? $size[0] : 0;
-				$params['h'] = $height = isset( $size[1] ) ? $size[1] : 0;
-			} else {
-				$available_sizes = $this->get_all_defined_sizes();
-				if ( isset( $available_sizes[ $size ] ) ) {
-					$size        = $available_sizes[ $size ];
-					$params['w'] = $width = $size['width'];
-					$params['h'] = $height = $size['height'];
-				}
-			}
-
-			$params = array_filter( $params );
-
-			$img_url = add_query_arg( $params, $img_url );
-
-			if ( ! isset( $width ) || ! isset( $height ) ) {
-				// any other type: use the real image
-				$meta   = wp_get_attachment_metadata( $attachment_id );
-
-				// Image sizes is missing for pdf thumbnails
-				if($meta) {
-					$meta['width']  = isset( $meta['width'] ) ? $meta['width'] : 0;
-					$meta['height'] = isset( $meta['height'] ) ? $meta['height'] : 0;
-				} else {
-					$meta = array("width" => 0, "height" => 0);
-				}
-
-
-				$width  = isset( $width ) ? $width : $meta['width'];
-				$height = isset( $height ) ? $height : $meta['height'];
-			}
-
-			$return = [ $img_url, $width, $height, true ];
-		}
-
-		return $return;
-	}
-
-	/**
-	 * Change url for images in srcset
-	 *
-	 * @param array  $sources
-	 * @param array  $size_array
-	 * @param string $image_src
-	 * @param array  $image_meta
-	 * @param int    $attachment_id
-	 *
-	 * @return array
-	 */
-	public function calculate_image_srcset( $sources, $size_array, $image_src, $image_meta, $attachment_id ) {
-		if ( ! empty ( $this->options['cdn_link'] ) ) {
-			$widths = array(30,50,100,200,300,320,400,500,576,600,640,700,720,750,768,800,900,940,1000,1024,1080,1100,1140,1152,1200,1242,1300,1400,1440,1442,1500,1536,1600,1700,1800,1880,1900,1920,2000,2048,2100,2200,2208,2280,2300,2400,2415,2500,2560,2600,2700,2732,2800,2880,2900,3000,3100,3200,3300,3400,3500,3600,3700,3800,3900,4000,4100,4200,4300,4400,4500,4600,4700,4800,4900,5000,5100,5120);
-
-			foreach ( $widths as $width ) {
-				if ( $attachment_id ) {
-					$image_src = wp_get_attachment_url( $attachment_id );
-				}
-				$image_src            = remove_query_arg( 'h', $image_src );
-				$sources[ $width ]['url'] = add_query_arg( 'w', $width, $image_src );
-				$sources[ $width ]['descriptor'] = 'w';
-				$sources[ $width ]['value'] = $width;
-			}
-		}
-		return $sources;
-	}
-
-	/**
-	 * Modify image urls in content to use gumlet host.
-	 *
-	 * @param $content
-	 *
-	 * @return string
-	 */
-	public function replace_images_in_content( $content ) {
-		// Added null to apply filters wp_get_attachment_url to improve compatibility with https://en-gb.wordpress.org/plugins/amazon-s3-and-cloudfront/ - does not break wordpress if the plugin isn't present.
-		if ( ! empty ( $this->options['cdn_link'] ) ) {
-			if ( preg_match_all( '/<img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches ) ) {
-				foreach ( $matches[2] as $image_src ) {
-					$content = str_replace( $image_src, apply_filters( 'wp_get_attachment_url', $image_src, null ), $content );
-				}
-			}
-
-			if ( preg_match_all( '/<img\s[^>]*srcset=([\"\']??)([^\">]*?)\1[^>]*\/?>/iU', $content, $matches ) ) {
-				foreach ( $matches[2] as $image_srcset ) {
-					preg_match_all('/(\S+)(\s\d+\w)/', $image_srcset, $srcset_matches);
-					$new_image_srcset = preg_replace_callback( '/(\S+)(\s\d+\w)/', function ( $srcset_matches ) {
-						return apply_filters( 'wp_get_attachment_url', $srcset_matches[1], null ) . $srcset_matches[2];
-					}, $image_srcset );
-					$content = str_replace( $image_srcset, $new_image_srcset, $content );
-				}
-			}
-
-			if ( preg_match_all( '/<a\s[^>]*href=([\"\']??)([^\" >]*?)\1[^>]*>(.*)<\/a>/iU', $content, $matches ) ) {
-				foreach ( $matches[0] as $link ) {
-					$content = str_replace( $link[2], apply_filters( 'wp_get_attachment_url', $link[2], null ), $content );
-				}
-			}
-
-			// this replaces background URLs
-      if ( preg_match_all('/url\(([\s])?([\"|\'])?(.*?)([\"|\'])?([\s])?\)/i', $content, $matches ) ) {
-        foreach ( $matches[3] as $image_src ) {
-          $content = str_replace( $image_src, apply_filters( 'wp_get_attachment_url', $image_src, null ), $content );
+    /**
+     * Plugin loader instance.
+     *
+     * @return Gumlet
+     */
+    public static function instance()
+    {
+        if (! isset(self::$instance)) {
+            self::$instance = new self;
         }
-      }
-		}
-		return $content;
-	}
 
-	/**
-	 * Add tag to dns prefetch cdn host
-	 */
-	public function prefetch_cdn() {
-		if ( ! empty ( $this->options['cdn_link'] ) ) {
-			$host = parse_url( $this->options['cdn_link'], PHP_URL_HOST );
+        return self::$instance;
+    }
 
-			printf(
-				'<link rel="dns-prefetch" href="%s"/>',
-				esc_attr( '//' . $host )
-			);
-		}
-	}
+    /**
+     * Set a single option.
+     *
+     * @param string $key
+     * @param mixed $value
+     */
+    public function set_option($key, $value)
+    {
+        $this->options[ $key ] = $value;
+    }
 
-	/**
-	 * Returns a array of global parameters to be applied in all images,
-	 * according to plugin's settings.
-	 *
-	 * @return array Global parameters to be appened at the end of each img URL.
-	 */
-	protected function get_global_params() {
-		$params = [];
+    /**
+     * Get a single option.
+     *
+     * @param  string $key
+     * @param  mixed $default
+     * @return mixed
+     */
+    public function get_option($key, $default = '')
+    {
+        return array_key_exists($key, $this->options) ? $this->options[ $key ] : $default;
+    }
 
-		// For now, only "auto" is supported.
-		if ( ! empty ( $this->options['auto_format'] ) ) {
-			$params["format"] = "auto";
-		}
+    /**
+     * Override options from settings.
+     * Used in unit tests.
+     *
+     * @param array $options
+     */
+    public function set_options($options)
+    {
+        $this->options = $options;
+    }
 
-		if ( ! empty ( $this->options['quality'] ) ) {
-			$params["quality"] = $this->options['quality'];
-		}
 
-		// if ( ! empty ( $this->options['auto_enhance'] ) ) {
-		// 	array_push( $auto, 'enhance' );
-		// }
+    /**
+     * Modify image urls for attachments to use gumlet host.
+     *
+     * @param string $url
+     *
+     * @return string
+     */
+    public function replace_image_url($url)
+    {
+        if (! empty($this->options['cdn_link'])) {
+            $parsed_url = parse_url($url);
 
-		if ( ! empty ( $this->options['auto_compress'] ) ) {
-			$params["compress"] = "true";
-		}
+            //Check if image is hosted on current site url -OR- the CDN url specified. Using strpos because we're comparing the host to a full CDN url.
+            if (
+                isset($parsed_url['host'], $parsed_url['path'])
+                && ($parsed_url['host'] === parse_url(home_url('/'), PHP_URL_HOST) || (isset($this->options['external_cdn_link']) && ! empty($this->options['external_cdn_link']) && strpos($this->options['external_cdn_link'], $parsed_url['host']) !== false))
+                && preg_match('/\.(jpg|jpeg|gif|png)$/i', $parsed_url['path'])
+            ) {
+                $cdn = parse_url($this->options['cdn_link']);
 
-		return $params;
-	}
+                foreach ([ 'scheme', 'host', 'port' ] as $url_part) {
+                    if (isset($cdn[ $url_part ])) {
+                        $parsed_url[ $url_part ] = $cdn[ $url_part ];
+                    } else {
+                        unset($parsed_url[ $url_part ]);
+                    }
+                }
 
-	/**
-	 * Get all defined image sizes
-	 *
-	 * @return array
-	 */
-	protected function get_all_defined_sizes() {
-		// Make thumbnails and other intermediate sizes.
-		$theme_image_sizes = wp_get_additional_image_sizes();
+                if (! empty($this->options['external_cdn_link'])) {
+                    $cdn_path = parse_url($this->options['external_cdn_link'], PHP_URL_PATH);
 
-		$sizes = [];
-		foreach ( get_intermediate_image_sizes() as $s ) {
-			$sizes[ $s ] = [ 'width' => '', 'height' => '', 'crop' => false ];
-			if ( isset( $theme_image_sizes[ $s ] ) ) {
-				// For theme-added sizes
-				$sizes[ $s ]['width']  = intval( $theme_image_sizes[ $s ]['width'] );
-				$sizes[ $s ]['height'] = intval( $theme_image_sizes[ $s ]['height'] );
-				$sizes[ $s ]['crop']   = $theme_image_sizes[ $s ]['crop'];
-			} else {
-				// For default sizes set in options
-				$sizes[ $s ]['width']  = get_option( "{$s}_size_w" );
-				$sizes[ $s ]['height'] = get_option( "{$s}_size_h" );
-				$sizes[ $s ]['crop']   = get_option( "{$s}_crop" );
-			}
-		}
+                    if (isset($cdn_path, $parsed_url['path']) && $cdn_path !== '/' && ! empty($parsed_url['path'])) {
+                        $parsed_url['path'] = str_replace($cdn_path, '', $parsed_url['path']);
+                    }
+                }
 
-		return $sizes;
-	}
+                $url = http_build_url($parsed_url);
+
+                $url = add_query_arg($this->get_global_params(), $url);
+            }
+        }
+
+        return $url;
+    }
+
+    /**
+     * Set params when running image_downsize
+     *
+     * @param false|array  $return
+     * @param int          $attachment_id
+     * @param string|array $size
+     *
+     * @return false|array
+     */
+    public function image_downsize($return, $attachment_id, $size)
+    {
+        if (! empty($this->options['cdn_link'])) {
+            $img_url = wp_get_attachment_url($attachment_id);
+
+            $params = [];
+            if (is_array($size)) {
+                $params['w'] = $width = isset($size[0]) ? $size[0] : 0;
+                $params['h'] = $height = isset($size[1]) ? $size[1] : 0;
+            } else {
+                $available_sizes = $this->get_all_defined_sizes();
+                if (isset($available_sizes[ $size ])) {
+                    $size        = $available_sizes[ $size ];
+                    $params['w'] = $width = $size['width'];
+                    $params['h'] = $height = $size['height'];
+                }
+            }
+
+            $params = array_filter($params);
+
+            $img_url = add_query_arg($params, $img_url);
+
+            if (! isset($width) || ! isset($height)) {
+                // any other type: use the real image
+                $meta   = wp_get_attachment_metadata($attachment_id);
+
+                // Image sizes is missing for pdf thumbnails
+                if ($meta) {
+                    $meta['width']  = isset($meta['width']) ? $meta['width'] : 0;
+                    $meta['height'] = isset($meta['height']) ? $meta['height'] : 0;
+                } else {
+                    $meta = array("width" => 0, "height" => 0);
+                }
+
+
+                $width  = isset($width) ? $width : $meta['width'];
+                $height = isset($height) ? $height : $meta['height'];
+            }
+
+            $return = [ $img_url, $width, $height, true ];
+        }
+
+        return $return;
+    }
+
+    /**
+     * Change url for images in srcset
+     *
+     * @param array  $sources
+     * @param array  $size_array
+     * @param string $image_src
+     * @param array  $image_meta
+     * @param int    $attachment_id
+     *
+     * @return array
+     */
+    public function calculate_image_srcset($sources, $size_array, $image_src, $image_meta, $attachment_id)
+    {
+        if (! empty($this->options['cdn_link'])) {
+            $widths = array(30,50,100,200,300,320,400,500,576,600,640,700,720,750,768,800,900,940,1000,1024,1080,1100,1140,1152,1200,1242,1300,1400,1440,1442,1500,1536,1600,1700,1800,1880,1900,1920,2000,2048,2100,2200,2208,2280,2300,2400,2415,2500,2560,2600,2700,2732,2800,2880,2900,3000,3100,3200,3300,3400,3500,3600,3700,3800,3900,4000,4100,4200,4300,4400,4500,4600,4700,4800,4900,5000,5100,5120);
+
+            foreach ($widths as $width) {
+                if ($attachment_id) {
+                    $image_src = wp_get_attachment_url($attachment_id);
+                }
+                $image_src            = remove_query_arg('h', $image_src);
+                $sources[ $width ]['url'] = add_query_arg('w', $width, $image_src);
+                $sources[ $width ]['descriptor'] = 'w';
+                $sources[ $width ]['value'] = $width;
+            }
+        }
+        return $sources;
+    }
+
+    /**
+     * Modify image urls in content to use gumlet host.
+     *
+     * @param $content
+     *
+     * @return string
+     */
+    public function replace_images_in_content($content)
+    {
+        // Added null to apply filters wp_get_attachment_url to improve compatibility with https://en-gb.wordpress.org/plugins/amazon-s3-and-cloudfront/ - does not break wordpress if the plugin isn't present.
+        if (! empty($this->options['cdn_link'])) {
+            if (preg_match_all('/<img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches)) {
+                foreach ($matches[2] as $image_src) {
+                    $content = str_replace($image_src, apply_filters('wp_get_attachment_url', $image_src, null), $content);
+                }
+            }
+
+            if (preg_match_all('/<img\s[^>]*srcset=([\"\']??)([^\">]*?)\1[^>]*\/?>/iU', $content, $matches)) {
+                foreach ($matches[2] as $image_srcset) {
+                    preg_match_all('/(\S+)(\s\d+\w)/', $image_srcset, $srcset_matches);
+                    $new_image_srcset = preg_replace_callback('/(\S+)(\s\d+\w)/', function ($srcset_matches) {
+                        return apply_filters('wp_get_attachment_url', $srcset_matches[1], null) . $srcset_matches[2];
+                    }, $image_srcset);
+                    $content = str_replace($image_srcset, $new_image_srcset, $content);
+                }
+            }
+
+            if (preg_match_all('/<a\s[^>]*href=([\"\']??)([^\" >]*?)\1[^>]*>(.*)<\/a>/iU', $content, $matches)) {
+                foreach ($matches[0] as $link) {
+                    $content = str_replace($link[2], apply_filters('wp_get_attachment_url', $link[2], null), $content);
+                }
+            }
+
+            // this replaces background URLs
+            if (preg_match_all('/url\(([\s])?([\"|\'])?(.*?)([\"|\'])?([\s])?\)/i', $content, $matches)) {
+                foreach ($matches[3] as $image_src) {
+                    $content = str_replace($image_src, apply_filters('wp_get_attachment_url', $image_src, null), $content);
+                }
+            }
+        }
+        return $content;
+    }
+
+    /**
+     * Add tag to dns prefetch cdn host
+     */
+    public function add_links_and_scripts()
+    {
+        $gumlet_host = parse_url($this->options['cdn_link'], PHP_URL_HOST);
+        if (isset($this->options['external_cdn_link'])) {
+            $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
+        }
+
+        if (! empty($this->options['cdn_link'])) {
+            printf(
+                '<link rel="dns-prefetch" href="%s"/>',
+                esc_attr('//' . $gumlet_host)
+            );
+        }
+
+        printf('<script src="https://cdn.gumlet.com/gumlet.js/2.0/gumlet.min.js" type="text/javascript"></script>');
+        printf('<script type="text/javascript">
+    var gm_config = {
+				lazyload: true,
+        hosts: [{
+            current: "%s",
+            gumlet: "%s"
+        }]};
+    	gumlet.init(gm_config);
+			</script>', $external_cdn_host ? $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST), $gumlet_host);
+    }
+
+    /**
+     * Returns a array of global parameters to be applied in all images,
+     * according to plugin's settings.
+     *
+     * @return array Global parameters to be appened at the end of each img URL.
+     */
+    protected function get_global_params()
+    {
+        $params = [];
+
+        // For now, only "auto" is supported.
+        if (! empty($this->options['auto_format'])) {
+            $params["format"] = "auto";
+        }
+
+        if (! empty($this->options['quality'])) {
+            $params["quality"] = $this->options['quality'];
+        }
+
+        // if ( ! empty ( $this->options['auto_enhance'] ) ) {
+        // 	array_push( $auto, 'enhance' );
+        // }
+
+        if (! empty($this->options['auto_compress'])) {
+            $params["compress"] = "true";
+        }
+
+        return $params;
+    }
+
+    /**
+     * Get all defined image sizes
+     *
+     * @return array
+     */
+    protected function get_all_defined_sizes()
+    {
+        // Make thumbnails and other intermediate sizes.
+        $theme_image_sizes = wp_get_additional_image_sizes();
+
+        $sizes = [];
+        foreach (get_intermediate_image_sizes() as $s) {
+            $sizes[ $s ] = [ 'width' => '', 'height' => '', 'crop' => false ];
+            if (isset($theme_image_sizes[ $s ])) {
+                // For theme-added sizes
+                $sizes[ $s ]['width']  = intval($theme_image_sizes[ $s ]['width']);
+                $sizes[ $s ]['height'] = intval($theme_image_sizes[ $s ]['height']);
+                $sizes[ $s ]['crop']   = $theme_image_sizes[ $s ]['crop'];
+            } else {
+                // For default sizes set in options
+                $sizes[ $s ]['width']  = get_option("{$s}_size_w");
+                $sizes[ $s ]['height'] = get_option("{$s}_size_h");
+                $sizes[ $s ]['crop']   = get_option("{$s}_crop");
+            }
+        }
+
+        return $sizes;
+    }
 }
 
 Gumlet::instance();
