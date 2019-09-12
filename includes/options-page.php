@@ -92,7 +92,7 @@ class Gumlet_Options_Page {
 								<label class="description" for="gumlet_settings[quality]"><?php esc_html_e( 'Image Quality', 'gumlet' ); ?></label>
 							</th>
 							<td>
-								<input id="gumlet_settings[quality]" type="number" name="gumlet_settings[quality]" value="80" <?php checked( $this->get_option( 'quality' ) ) ?> />
+								<input id="gumlet_settings[quality]" type="number" placeholder="Default: auto" name="gumlet_settings[quality]" value="<?php echo $this->get_option( 'quality' ); ?>" />
 							</td>
 						</tr>
 					</tbody>

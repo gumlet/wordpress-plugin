@@ -246,7 +246,7 @@ class Gumlet
 									$src = $imageTag->getAttribute('src');
 
 									if(parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host) {
-										$imageTag->setAttribute("data-src", $src );
+										$imageTag->setAttribute("data-gmsrc", $src );
 										$imageTag->removeAttribute("src");
 										$imageTag->removeAttribute("srcset");
 										$new_img_tag = $doc->saveHTML($imageTag);
@@ -301,14 +301,23 @@ class Gumlet
         printf('<script src="https://cdn.gumlet.com/gumlet.js/2.0/gumlet.min.js" type="text/javascript"></script>');
         printf('<script type="text/javascript">
     var gm_config = {
+        data_src : "gmsrc",
 				lazy_load: true,
-				auto_webp: true,
+				auto_webp: %s,
+        default_params: {
+          compress: %s,
+          quality: "%s"
+        },
         hosts: [{
             current: "%s",
             gumlet: "%s"
         }]};
     	gumlet.init(gm_config);
-			</script>', isset($external_cdn_host) ? $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST), $gumlet_host);
+			</script>', (!empty($this->options['auto_format'])) ? 'true' : 'false',
+        (!empty($this->options['auto_compress'])) ? 'true' : 'false',
+        (!empty($this->options['quality'])) ? $this->options['quality'] : 'auto',
+        isset($external_cdn_host) ? $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST),
+        $gumlet_host);
     }
 
     /**
