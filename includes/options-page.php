@@ -44,11 +44,11 @@ class Gumlet_Options_Page {
 		<div class="wrap">
 
 			<h1>
-				<img src="<?php echo plugins_url( 'assets/images/gumlet-logo.png', __DIR__ ); ?>" alt="gumlet Logo">
+				<img src="<?php echo plugins_url( 'assets/images/gumlet-logo.png', __DIR__ ); ?>" alt="gumlet Logo" style="width:200px; margin-left: -12px;">
 			</h1>
 
 			<p><strong>Need help getting started?</strong> It's easy! Check out our
-				<a href="https://github.com/gumlet/wordpress-plugin" target="_blank">instructions.</a>
+				<a href="https://wordpress.org/plugins/gumlet/#installation" target="_blank">instructions.</a>
 			</p>
 
 			<form method="post" action="<?php echo admin_url( 'options.php' ); ?>">
@@ -92,7 +92,7 @@ class Gumlet_Options_Page {
 								<label class="description" for="gumlet_settings[quality]"><?php esc_html_e( 'Image Quality', 'gumlet' ); ?></label>
 							</th>
 							<td>
-								<input id="gumlet_settings[quality]" type="number" placeholder="Default: auto" name="gumlet_settings[quality]" value="<?php echo $this->get_option( 'quality' ); ?>" />
+								<input id="gumlet_settings[quality]" type="number" placeholder="Default: auto" name="gumlet_settings[quality]" value="<?php echo $this->get_option( 'quality' ); ?>" min="40" max='95' style="width: 200px;" />
 							</td>
 						</tr>
 					</tbody>
@@ -105,7 +105,7 @@ class Gumlet_Options_Page {
 
 			<p class="description">
 				This plugin is powered by
-				<a href="http://www.gulet.com" target="_blank">Gumlet</a>. You can find and contribute to the code on
+				<a href="https://www.gumlet.com" target="_blank">Gumlet</a>. You can find and contribute to the code on
 				<a href="https://github.com/gumlet/wordpress-plugin" target="_blank">GitHub</a>.
 			</p>
 		</div>

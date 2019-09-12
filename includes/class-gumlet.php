@@ -231,31 +231,31 @@ class Gumlet
     {
         // Added null to apply filters wp_get_attachment_url to improve compatibility with https://en-gb.wordpress.org/plugins/amazon-s3-and-cloudfront/ - does not break wordpress if the plugin isn't present.
         if (! empty($this->options['cdn_link'])) {
-						if (isset($this->options['external_cdn_link'])) {
-		            $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
-		        }
+            if (isset($this->options['external_cdn_link'])) {
+                $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
+            }
 
-						$going_to_be_replaced_host = isset($external_cdn_host) ?  $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST);
+            $going_to_be_replaced_host = isset($external_cdn_host) ?  $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST);
 
-						// replaces src with data-src and removes srcset from images
+            // replaces src with data-src and removes srcset from images
             if (preg_match_all('/<img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches)) {
-								foreach ($matches[0] as $img_tag) {
-									$doc = new DOMDocument();
-									$doc->loadHTML($img_tag);
-									$imageTag = $doc->getElementsByTagName('img')[0];
-									$src = $imageTag->getAttribute('src');
-
-									if(parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host) {
-										$imageTag->setAttribute("data-gmsrc", $src );
-										$imageTag->removeAttribute("src");
-										$imageTag->removeAttribute("srcset");
-										$new_img_tag = $doc->saveHTML($imageTag);
-										$content = str_replace($img_tag, $new_img_tag, $content);
-									}
+                foreach ($matches[0] as $img_tag) {
+                    $doc = new DOMDocument();
+                    $doc->loadHTML($img_tag);
+                    $imageTag = $doc->getElementsByTagName('img')[0];
+                    $src = $imageTag->getAttribute('src');
+                    $src = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg)$)/i', '', $src);
+                    if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host) {
+                        $imageTag->setAttribute("data-gmsrc", $src);
+                        $imageTag->removeAttribute("src");
+                        $imageTag->removeAttribute("srcset");
+                        $new_img_tag = $doc->saveHTML($imageTag);
+                        $content = str_replace($img_tag, $new_img_tag, $content);
+                    }
                 }
             }
 
-						// We don't want links to be processed by Gumlet
+            // We don't want links to be processed by Gumlet
 
             // if (preg_match_all('/<a\s[^>]*href=([\"\']??)([^\" >]*?)\1[^>]*>(.*)<\/a>/iU', $content, $matches)) {
             //     foreach ($matches[0] as $link) {
@@ -263,20 +263,21 @@ class Gumlet
             //     }
             // }
 
-						// this replaces background URLs with data-bg
-						preg_match_all('~\bstyle=(\'|")(.*?)background(-image)?\s*:(.*?)\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i',$content,$matches);
+            // this replaces background URLs with data-bg
+            preg_match_all('~\bstyle=(\'|")(.*?)background(-image)?\s*:(.*?)\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $content, $matches);
 
-				    if( empty( $matches ) ) return $content;
+            if (empty($matches)) {
+                return $content;
+            }
 
-				    foreach( $matches[0] as $match ){
-				         preg_match('~\bbackground(-image)?\s*:(.*?)\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i',$match,$bg);
-								 if(parse_url($bg['image'], PHP_URL_HOST) == $going_to_be_replaced_host) {
-									 $bg_less_match = str_replace( $bg[0], '', $match );
-					         $data_match = 'data-bg="'.$bg['image'].'" '.$bg_less_match;
-					         $content = str_replace( array($match.';', $match), array( $data_match, $data_match), $content);
-								 }
-
-				    }
+            foreach ($matches[0] as $match) {
+                preg_match('~\bbackground(-image)?\s*:(.*?)\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $match, $bg);
+                if (parse_url($bg['image'], PHP_URL_HOST) == $going_to_be_replaced_host) {
+                    $bg_less_match = str_replace($bg[0], '', $match);
+                    $data_match = 'data-bg="'.$bg['image'].'" '.$bg_less_match;
+                    $content = str_replace(array($match.';', $match), array( $data_match, $data_match), $content);
+                }
+            }
         }
         return $content;
     }
@@ -299,7 +300,8 @@ class Gumlet
         }
 
         printf('<script src="https://cdn.gumlet.com/gumlet.js/2.0/gumlet.min.js" type="text/javascript"></script>');
-        printf('<script type="text/javascript">
+        printf(
+            '<script type="text/javascript">
     var gm_config = {
         data_src : "gmsrc",
 				lazy_load: true,
@@ -313,11 +315,13 @@ class Gumlet
             gumlet: "%s"
         }]};
     	gumlet.init(gm_config);
-			</script>', (!empty($this->options['auto_format'])) ? 'true' : 'false',
-        (!empty($this->options['auto_compress'])) ? 'true' : 'false',
-        (!empty($this->options['quality'])) ? $this->options['quality'] : 'auto',
-        isset($external_cdn_host) ? $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST),
-        $gumlet_host);
+			</script>',
+            (!empty($this->options['auto_format'])) ? 'true' : 'false',
+            (!empty($this->options['auto_compress'])) ? 'true' : 'false',
+            (!empty($this->options['quality'])) ? $this->options['quality'] : 'auto',
+            isset($external_cdn_host) ? $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST),
+            $gumlet_host
+        );
     }
 
     /**

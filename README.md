@@ -1,7 +1,7 @@
 Gumlet Wordpress Plugin
 =======================
 
-Official WordPress plugin to automatically load all your existing (and future) WordPress images via the [Gumlet](https://www.gumlet.com/) service for smaller, faster, and better looking images.
+Official [WordPress plugin](https://wordpress.org/plugins/gumlet/) to automatically load all your existing (and future) WordPress images via the [Gumlet](https://www.gumlet.com/) service for smaller, faster, and better looking images.
 
 * [Features](#features)
 * [Getting Started](#getting-started)
