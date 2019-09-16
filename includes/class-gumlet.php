@@ -39,7 +39,7 @@ class Gumlet
 
         // add_filter('wp_calculate_image_srcset', [ $this, 'calculate_image_srcset' ], 10, 5);
 
-        add_filter('the_content', [ $this, 'replace_images_in_content' ]);
+        add_filter('the_content', [ $this, 'replace_images_in_content' ], 500);
         add_action('wp_head', [ $this, 'add_links_and_scripts' ], 1);
     }
 
@@ -230,7 +230,7 @@ class Gumlet
     public function replace_images_in_content($content)
     {
         // Added null to apply filters wp_get_attachment_url to improve compatibility with https://en-gb.wordpress.org/plugins/amazon-s3-and-cloudfront/ - does not break wordpress if the plugin isn't present.
-        if (! empty($this->options['cdn_link'])) {
+        if (! empty($this->options['cdn_link']) && !is_admin()) {
             $gumlet_host = parse_url($this->options['cdn_link'], PHP_URL_HOST);
             if (isset($this->options['external_cdn_link'])) {
                 $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
@@ -245,7 +245,11 @@ class Gumlet
                     $doc->loadHTML($img_tag);
                     $imageTag = $doc->getElementsByTagName('img')[0];
                     $src = $imageTag->getAttribute('src');
-                    $src = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg)$)/i', '', $src);
+                    preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $src, $size_matches);
+                    if(strlen($size_matches[0][0]) > 4){
+                      $src = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $src);
+                    }
+
                     if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host) {
                         $imageTag->setAttribute("data-gmsrc", $src);
                         $imageTag->removeAttribute("src");
