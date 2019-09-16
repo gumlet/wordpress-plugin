@@ -32,10 +32,10 @@ class Gumlet
         $this->options = get_option('gumlet_settings', []);
 
         // Change filter load order to ensure it loads after other CDN url transformations i.e. Amazon S3 which loads at position 99.
-        add_filter('wp_get_attachment_url', [ $this, 'replace_image_url' ], 100);
-        add_filter('gumlet/add-image-url', [ $this, 'replace_image_url' ]);
+        // add_filter('wp_get_attachment_url', [ $this, 'replace_image_url' ], 100);
+        // add_filter('gumlet/add-image-url', [ $this, 'replace_image_url' ]);
 
-        add_filter('image_downsize', [ $this, 'image_downsize' ], 10, 3);
+        // add_filter('image_downsize', [ $this, 'image_downsize' ], 10, 3);
 
         // add_filter('wp_calculate_image_srcset', [ $this, 'calculate_image_srcset' ], 10, 5);
 
@@ -231,6 +231,7 @@ class Gumlet
     {
         // Added null to apply filters wp_get_attachment_url to improve compatibility with https://en-gb.wordpress.org/plugins/amazon-s3-and-cloudfront/ - does not break wordpress if the plugin isn't present.
         if (! empty($this->options['cdn_link'])) {
+            $gumlet_host = parse_url($this->options['cdn_link'], PHP_URL_HOST);
             if (isset($this->options['external_cdn_link'])) {
                 $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
             }
@@ -245,7 +246,7 @@ class Gumlet
                     $imageTag = $doc->getElementsByTagName('img')[0];
                     $src = $imageTag->getAttribute('src');
                     $src = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg)$)/i', '', $src);
-                    if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host) {
+                    if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host) {
                         $imageTag->setAttribute("data-gmsrc", $src);
                         $imageTag->removeAttribute("src");
                         $imageTag->removeAttribute("srcset");
@@ -272,7 +273,7 @@ class Gumlet
 
             foreach ($matches[0] as $match) {
                 preg_match('~\bbackground(-image)?\s*:(.*?)\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $match, $bg);
-                if (parse_url($bg['image'], PHP_URL_HOST) == $going_to_be_replaced_host) {
+                if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($bg[4], PHP_URL_HOST) == $gumlet_host) {
                     $bg_less_match = str_replace($bg[0], '', $match);
                     $data_match = 'data-bg="'.$bg['image'].'" '.$bg_less_match;
                     $content = str_replace(array($match.';', $match), array( $data_match, $data_match), $content);
