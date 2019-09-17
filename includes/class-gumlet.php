@@ -31,6 +31,9 @@ class Gumlet
     {
         $this->options = get_option('gumlet_settings', []);
 
+        add_action('init', [ $this, 'init_ob' ]);
+
+
         // Change filter load order to ensure it loads after other CDN url transformations i.e. Amazon S3 which loads at position 99.
         // add_filter('wp_get_attachment_url', [ $this, 'replace_image_url' ], 100);
         // add_filter('gumlet/add-image-url', [ $this, 'replace_image_url' ]);
@@ -39,8 +42,25 @@ class Gumlet
 
         // add_filter('wp_calculate_image_srcset', [ $this, 'calculate_image_srcset' ], 10, 5);
 
-        add_filter('the_content', [ $this, 'replace_images_in_content' ], PHP_INT_MAX);
+        // add_filter('the_content', [ $this, 'replace_images_in_content' ], PHP_INT_MAX);
         add_action('wp_head', [ $this, 'add_links_and_scripts' ], 1);
+
+        add_action('shutdown', function () {
+            $final = '';
+
+            // We'll need to get the number of ob levels we're in, so that we can iterate over each, collecting
+            // that buffer's output into the final output.
+            $levels = ob_get_level();
+
+            for ($i = 0; $i < $levels; $i++) {
+                $final .= ob_get_clean();
+            }
+
+            // Apply any filters to the final output
+            echo apply_filters('final_output', $final);
+        }, 0);
+
+        add_filter('final_output', [ $this, 'replace_images_in_content' ]);
     }
 
     /**
@@ -89,6 +109,11 @@ class Gumlet
     public function set_options($options)
     {
         $this->options = $options;
+    }
+
+    public function init_ob()
+    {
+        ob_start();
     }
 
 
@@ -229,6 +254,7 @@ class Gumlet
      */
     public function replace_images_in_content($content)
     {
+        // $content = file_get_contents("/Users/adityapatadia/Turing/wordpress/wp-content/plugins/gumlet/test.html");
         // Added null to apply filters wp_get_attachment_url to improve compatibility with https://en-gb.wordpress.org/plugins/amazon-s3-and-cloudfront/ - does not break wordpress if the plugin isn't present.
         if (! empty($this->options['cdn_link']) && !is_admin()) {
             $gumlet_host = parse_url($this->options['cdn_link'], PHP_URL_HOST);
@@ -246,8 +272,8 @@ class Gumlet
                     $imageTag = $doc->getElementsByTagName('img')[0];
                     $src = $imageTag->getAttribute('src');
                     preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $src, $size_matches);
-                    if(strlen($size_matches[0][0]) > 4){
-                      $src = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $src);
+                    if ($size_matches[0] && strlen($size_matches[0][0]) > 4) {
+                        $src = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $src);
                     }
 
                     if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host) {
@@ -300,7 +326,7 @@ class Gumlet
         if (! empty($this->options['cdn_link'])) {
             printf(
                 '<link rel="dns-prefetch" href="%s"/>',
-                esc_attr('//' . $gumlet_host)
+                esc_attr('https://' . $gumlet_host)
             );
         }
 
