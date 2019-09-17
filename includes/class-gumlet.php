@@ -39,7 +39,7 @@ class Gumlet
 
         // add_filter('wp_calculate_image_srcset', [ $this, 'calculate_image_srcset' ], 10, 5);
 
-        add_filter('the_content', [ $this, 'replace_images_in_content' ], 500);
+        add_filter('the_content', [ $this, 'replace_images_in_content' ], PHP_INT_MAX);
         add_action('wp_head', [ $this, 'add_links_and_scripts' ], 1);
     }
 
