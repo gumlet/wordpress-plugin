@@ -271,6 +271,10 @@ class Gumlet
                     $doc->loadHTML($img_tag);
                     $imageTag = $doc->getElementsByTagName('img')[0];
                     $src = $imageTag->getAttribute('src');
+                    if(strpos($src, ';base64,') !== false) {
+                      // does not process data URL.
+                      continue;
+                    }
                     preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $src, $size_matches);
                     if ($size_matches[0] && strlen($size_matches[0][0]) > 4) {
                         $src = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $src);
@@ -303,6 +307,10 @@ class Gumlet
 
             foreach ($matches[0] as $match) {
                 preg_match('~\bbackground(-image)?\s*:(.*?)\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $match, $bg);
+                if(strpos($bg['image'], ';base64,') !== false) {
+                  // does not process data URL.
+                  continue;
+                }
                 if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($bg[4], PHP_URL_HOST) == $gumlet_host) {
                     $bg_less_match = str_replace($bg[0], '', $match);
                     $data_match = 'data-bg="'.$bg['image'].'" '.$bg_less_match;
