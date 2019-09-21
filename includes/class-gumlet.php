@@ -312,6 +312,10 @@ class Gumlet
                   continue;
                 }
                 if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($bg[4], PHP_URL_HOST) == $gumlet_host) {
+                    preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $bg['image'], $size_matches);
+                    if ($size_matches[0] && strlen($size_matches[0][0]) > 4) {
+                        $bg['image'] = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $bg['image']);
+                    }
                     $bg_less_match = str_replace($bg[0], '', $match);
                     $data_match = 'data-bg="'.$bg['image'].'" '.$bg_less_match;
                     $content = str_replace(array($match.';', $match), array( $data_match, $data_match), $content);
