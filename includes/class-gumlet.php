@@ -33,12 +33,15 @@ class Gumlet
 
 
         // Change filter load order to ensure it loads after other CDN url transformations i.e. Amazon S3 which loads at position 99.
+
+
         // add_filter('wp_get_attachment_url', [ $this, 'replace_image_url' ], 100);
         // add_filter('gumlet/add-image-url', [ $this, 'replace_image_url' ]);
 
         // add_filter('image_downsize', [ $this, 'image_downsize' ], 10, 3);
 
         // add_filter('wp_calculate_image_srcset', [ $this, 'calculate_image_srcset' ], 10, 5);
+
         add_filter('pum_popup_content', [ $this, 'replace_images_in_content' ], 50000);
 
         add_filter('the_content', [ $this, 'replace_images_in_content' ], 50000);
@@ -233,7 +236,7 @@ class Gumlet
     {
         // $content = file_get_contents("/Users/adityapatadia/Turing/wordpress/wp-content/plugins/gumlet/test.html");
         // Added null to apply filters wp_get_attachment_url to improve compatibility with https://en-gb.wordpress.org/plugins/amazon-s3-and-cloudfront/ - does not break wordpress if the plugin isn't present.
-        if (! empty($this->options['cdn_link']) && !is_admin()) {
+        if (! empty($this->options['cdn_link']) && !is_admin() && !is_amp_endpoint()) {
             $gumlet_host = parse_url($this->options['cdn_link'], PHP_URL_HOST);
             if (isset($this->options['external_cdn_link'])) {
                 $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
