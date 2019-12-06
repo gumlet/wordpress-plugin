@@ -31,8 +31,6 @@ class Gumlet
     {
         $this->options = get_option('gumlet_settings', []);
 
-        add_action('init', [ $this, 'init_ob' ]);
-
 
         // Change filter load order to ensure it loads after other CDN url transformations i.e. Amazon S3 which loads at position 99.
         // add_filter('wp_get_attachment_url', [ $this, 'replace_image_url' ], 100);
@@ -41,26 +39,11 @@ class Gumlet
         // add_filter('image_downsize', [ $this, 'image_downsize' ], 10, 3);
 
         // add_filter('wp_calculate_image_srcset', [ $this, 'calculate_image_srcset' ], 10, 5);
+        add_filter('pum_popup_content', [ $this, 'replace_images_in_content' ], 50000);
 
-        // add_filter('the_content', [ $this, 'replace_images_in_content' ], PHP_INT_MAX);
+        add_filter('the_content', [ $this, 'replace_images_in_content' ], 50000);
+
         add_action('wp_head', [ $this, 'add_links_and_scripts' ], 1);
-
-        add_action('shutdown', function () {
-            $final = '';
-
-            // We'll need to get the number of ob levels we're in, so that we can iterate over each, collecting
-            // that buffer's output into the final output.
-            $levels = ob_get_level();
-
-            for ($i = 0; $i < $levels; $i++) {
-                $final .= ob_get_clean();
-            }
-
-            // Apply any filters to the final output
-            echo apply_filters('final_output', $final);
-        }, 0);
-
-        add_filter('final_output', [ $this, 'replace_images_in_content' ]);
     }
 
     /**
@@ -110,12 +93,6 @@ class Gumlet
     {
         $this->options = $options;
     }
-
-    public function init_ob()
-    {
-        ob_start();
-    }
-
 
     /**
      * Modify image urls for attachments to use gumlet host.
@@ -361,7 +338,7 @@ class Gumlet
 			</script>',
             (!empty($this->options['auto_format'])) ? 'true' : 'false',
             (!empty($this->options['auto_compress'])) ? 'true' : 'false',
-            (!empty($this->options['quality'])) ? $this->options['quality'] : 'auto',
+            (!empty($this->options['quality'])) ? $this->options['quality'] : '80',
             isset($external_cdn_host) ? $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST),
             $gumlet_host
         );
