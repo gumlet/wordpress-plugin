@@ -4,7 +4,7 @@ Contributors: adityapatadia
 Tags: images, image management, image manipulation, image optimization, image compression, lazy load images, gumlet, picture, pictures, thumbnails, cdn, content delivery network, jpeg, png, webp
 Requires at least: 3.3
 Tested up to: 5.3.0
-Stable tag: 1.0.16
+Stable tag: 1.0.17
 License: BSD-2
 License URI: http://opensource.org/licenses/BSD-2-Clause
 

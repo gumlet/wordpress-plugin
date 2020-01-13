@@ -327,10 +327,9 @@ class Gumlet
             );
         }
 
-        printf('<script src="https://cdn.gumlet.com/gumlet.js/2.0/gumlet.min.js" type="text/javascript"></script>');
         printf(
             '<script type="text/javascript">
-    var gm_config = {
+    window.GUMLET_CONFIG = {
         data_src : "gmsrc",
 				lazy_load: true,
 				auto_webp: %s,
@@ -342,8 +341,8 @@ class Gumlet
             current: "%s",
             gumlet: "%s"
         }]};
-    	gumlet.init(gm_config);
-			</script>',
+			</script>
+      <script src="https://cdn.gumlet.com/gumlet.js/2.0/gumlet.min.js" type="text/javascript" async></script>',
             (!empty($this->options['auto_format'])) ? 'true' : 'false',
             (!empty($this->options['auto_compress'])) ? 'true' : 'false',
             (!empty($this->options['quality'])) ? $this->options['quality'] : '80',
