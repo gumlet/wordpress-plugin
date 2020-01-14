@@ -84,6 +84,14 @@ class Gumlet_Options_Page
 											<p>If you are using any other domain apart from your website main domain to serve images, please enter the domain name here.</p>
 									</td>
 							</tr>
+              <tr>
+    							<th>
+    								<label class="description" for="gumlet_settings[lazy_load]"><?php esc_html_e('Lazy Load Images', 'gumlet'); ?></label>
+    							</th>
+    							<td>
+    								<input id="gumlet_settings[lazy_load]" type="checkbox" name="gumlet_settings[lazy_load]" value="1" <?php checked($this->get_option('lazy_load')) ?> />
+    							</td>
+    						</tr>
 					<tr>
 							<th>
 								<label class="description" for="gumlet_settings[auto_format]"><?php esc_html_e('Auto Format Images', 'gumlet'); ?></label>

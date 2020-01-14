@@ -331,7 +331,7 @@ class Gumlet
             '<script type="text/javascript">
     window.GUMLET_CONFIG = {
         data_src : "gmsrc",
-				lazy_load: true,
+				lazy_load: %s,
 				auto_webp: %s,
         default_params: {
           compress: %s,
@@ -343,6 +343,7 @@ class Gumlet
         }]};
 			</script>
       <script src="https://cdn.gumlet.com/gumlet.js/2.0/gumlet.min.js" type="text/javascript" async></script>',
+            (!empty($this->options['lazy_load'])) ? 'true' : 'false',
             (!empty($this->options['auto_format'])) ? 'true' : 'false',
             (!empty($this->options['auto_compress'])) ? 'true' : 'false',
             (!empty($this->options['quality'])) ? $this->options['quality'] : '80',
