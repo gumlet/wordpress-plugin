@@ -31,6 +31,8 @@ class Gumlet
     {
         $this->options = get_option('gumlet_settings', []);
 
+        $this->logger = GumletLogger::instance();
+
 
         // Change filter load order to ensure it loads after other CDN url transformations i.e. Amazon S3 which loads at position 99.
 
@@ -44,9 +46,16 @@ class Gumlet
 
         add_filter('pum_popup_content', [ $this, 'replace_images_in_content' ], 50000);
 
-        add_filter('the_content', [ $this, 'replace_images_in_content' ], 50000);
+        add_action('init', [$this, 'init_ob'], 1);
+
+        // add_filter('the_content', [ $this, 'replace_images_in_content' ], 50000);
 
         add_action('wp_head', [ $this, 'add_links_and_scripts' ], 1);
+    }
+
+    public function init_ob()
+    {
+        ob_start([$this, 'replace_images_in_content']);
     }
 
     /**
@@ -237,8 +246,8 @@ class Gumlet
         // $content = file_get_contents("/Users/adityapatadia/Turing/wordpress/wp-content/plugins/gumlet/test.html");
         // Added null to apply filters wp_get_attachment_url to improve compatibility with https://en-gb.wordpress.org/plugins/amazon-s3-and-cloudfront/ - does not break wordpress if the plugin isn't present.
         $amp_endpoint = false;
-        if(function_exists('is_amp_endpoint')){
-          $amp_endpoint = is_amp_endpoint();
+        if (function_exists('is_amp_endpoint')) {
+            $amp_endpoint = is_amp_endpoint();
         }
 
         if (! empty($this->options['cdn_link']) && !is_admin() && !$amp_endpoint) {
@@ -249,16 +258,16 @@ class Gumlet
 
             $going_to_be_replaced_host = isset($external_cdn_host) ?  $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST);
 
-            // replaces src with data-src and removes srcset from images
+            // replaces src with data-gmsrc and removes srcset from images
             if (preg_match_all('/<img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches)) {
                 foreach ($matches[0] as $img_tag) {
                     $doc = new DOMDocument();
                     $doc->loadHTML($img_tag);
                     $imageTag = $doc->getElementsByTagName('img')[0];
                     $src = $imageTag->getAttribute('src');
-                    if(strpos($src, ';base64,') !== false) {
-                      // does not process data URL.
-                      continue;
+                    if (strpos($src, ';base64,') !== false) {
+                        // does not process data URL.
+                        continue;
                     }
                     preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $src, $size_matches);
                     if ($size_matches[0] && strlen($size_matches[0][0]) > 4) {
@@ -269,6 +278,9 @@ class Gumlet
                         $imageTag->setAttribute("data-gmsrc", $src);
                         $imageTag->removeAttribute("src");
                         $imageTag->removeAttribute("srcset");
+                        $imageTag->removeAttribute("data-src");
+                        $imageTag->removeAttribute("data-srcset");
+                        $imageTag->removeAttribute("data-lazy-src");
                         $new_img_tag = $doc->saveHTML($imageTag);
                         $content = str_replace($img_tag, $new_img_tag, $content);
                     }
@@ -283,27 +295,52 @@ class Gumlet
             //     }
             // }
 
-            // this replaces background URLs with data-bg
+            // this replaces background URLs on any tags with data-bg
             preg_match_all('~\bstyle=(\'|")(.*?)background(-image)?\s*:(.*?)\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $content, $matches);
 
-            if (empty($matches)) {
-                return $content;
+            if (!empty($matches)) {
+                foreach ($matches[0] as $match) {
+                    preg_match('~\bbackground(-image)?\s*:(.*?)\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $match, $bg);
+                    if (strpos($bg['image'], ';base64,') !== false) {
+                        // does not process data URL.
+                        continue;
+                    }
+                    if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($bg[4], PHP_URL_HOST) == $gumlet_host) {
+                        preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $bg['image'], $size_matches);
+                        if ($size_matches[0] && strlen($size_matches[0][0]) > 4) {
+                            $bg['image'] = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $bg['image']);
+                        }
+                        $bg_less_match = str_replace($bg[0], '', $match);
+                        $data_match = 'data-bg="'.$bg['image'].'" '.$bg_less_match;
+                        $content = str_replace(array($match.';', $match), array( $data_match, $data_match), $content);
+                    }
+                }
             }
 
-            foreach ($matches[0] as $match) {
-                preg_match('~\bbackground(-image)?\s*:(.*?)\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $match, $bg);
-                if(strpos($bg['image'], ';base64,') !== false) {
-                  // does not process data URL.
-                  continue;
-                }
-                if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($bg[4], PHP_URL_HOST) == $gumlet_host) {
-                    preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $bg['image'], $size_matches);
-                    if ($size_matches[0] && strlen($size_matches[0][0]) > 4) {
-                        $bg['image'] = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $bg['image']);
+
+            // we now replace all backgrounds in <style> tags...
+            preg_match_all('~\bbackground(-image)?\s*:(.*?)\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $content, $matches);
+
+            if (!empty($matches)) {
+                foreach ($matches[0] as $match) {
+                    preg_match('~\bbackground(-image)?\s*:(.*?)\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $match, $bg);
+                    $original_bg = $bg['image'];
+                    if (strpos($bg['image'], ';base64,') !== false) {
+                        // does not process data URL.
+                        continue;
                     }
-                    $bg_less_match = str_replace($bg[0], '', $match);
-                    $data_match = 'data-bg="'.$bg['image'].'" '.$bg_less_match;
-                    $content = str_replace(array($match.';', $match), array( $data_match, $data_match), $content);
+                    if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($bg[4], PHP_URL_HOST) == $gumlet_host) {
+                        preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $bg['image'], $size_matches);
+                        if ($size_matches[0] && strlen($size_matches[0][0]) > 4) {
+                            $bg['image'] = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $bg['image']);
+                        }
+                        $parsed_url = parse_url($bg['image']);
+                        $parsed_url['host'] = $gumlet_host;
+                        $bg['image'] = $this->unparse_url($parsed_url);
+                        $bg['image'] = add_query_arg($this->get_global_params(), $bg['image']);
+                        $final_bg_style = str_replace($original_bg, $bg['image'], $match);
+                        $content = str_replace(array($match.';', $match), array( $final_bg_style, $final_bg_style), $content);
+                    }
                 }
             }
         }
@@ -409,6 +446,20 @@ class Gumlet
         }
 
         return $sizes;
+    }
+
+    protected function unparse_url($parsed_url)
+    {
+        $scheme   = isset($parsed_url['scheme']) ? $parsed_url['scheme'] . '://' : '';
+        $host     = isset($parsed_url['host']) ? $parsed_url['host'] : '';
+        $port     = isset($parsed_url['port']) ? ':' . $parsed_url['port'] : '';
+        $user     = isset($parsed_url['user']) ? $parsed_url['user'] : '';
+        $pass     = isset($parsed_url['pass']) ? ':' . $parsed_url['pass']  : '';
+        $pass     = ($user || $pass) ? "$pass@" : '';
+        $path     = isset($parsed_url['path']) ? $parsed_url['path'] : '';
+        $query    = isset($parsed_url['query']) ? '?' . $parsed_url['query'] : '';
+        $fragment = isset($parsed_url['fragment']) ? '#' . $parsed_url['fragment'] : '';
+        return "$scheme$user$pass$host$port$path$query$fragment";
     }
 }
 
