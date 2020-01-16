@@ -44,13 +44,33 @@ class Gumlet
 
         // add_filter('wp_calculate_image_srcset', [ $this, 'calculate_image_srcset' ], 10, 5);
 
-        add_filter('pum_popup_content', [ $this, 'replace_images_in_content' ], 50000);
+        add_action('wp_head', [ $this, 'add_prefetch' ], 1);
 
-        add_action('init', [$this, 'init_ob'], 1);
+        add_action('wp_enqueue_scripts', [$this, 'enqueue_script'], 1);
 
-        // add_filter('the_content', [ $this, 'replace_images_in_content' ], 50000);
+        // add_action('init', [$this, 'init_ob'], 1);
+        add_filter('pum_popup_content', [ $this, 'replace_images_in_content' ], PHP_INT_MAX);
+        add_filter('the_content', [ $this, 'replace_images_in_content' ], PHP_INT_MAX);
+        add_filter('post_thumbnail_html', [ $this, 'replace_images_in_content' ], PHP_INT_MAX );
+        add_filter('get_image_tag', [ $this, 'replace_images_in_content' ], PHP_INT_MAX );
+		    add_filter('wp_get_attachment_image_attributes', [ $this, 'replace_images_in_content' ], PHP_INT_MAX );
+    }
 
-        add_action('wp_head', [ $this, 'add_links_and_scripts' ], 1);
+    public function enqueue_script() {
+      if (isset($this->options['external_cdn_link'])) {
+          $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
+      }
+
+      wp_register_script('gumlet-script', 'https://cdn.gumlet.com/gumlet.js/2.0/gumlet.min.js', array(), '2.0', false);
+      wp_localize_script('gumlet-script', 'gumlet_wp_config', array(
+        'gumlet_host' => parse_url($this->options['cdn_link'], PHP_URL_HOST),
+        'current_host' => isset($external_cdn_host) ? $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST),
+        'lazy_load' => (!empty($this->options['lazy_load'])) ? 1 : 0,
+        'auto_format' => (!empty($this->options['auto_format'])) ? 1 : 0,
+        'auto_compress' => (!empty($this->options['auto_compress'])) ? 1 : 0,
+        'quality' => (!empty($this->options['quality'])) ? $this->options['quality'] : 80
+      ));
+      wp_enqueue_script('gumlet-script');
     }
 
     public function init_ob()
@@ -329,7 +349,7 @@ class Gumlet
                         // does not process data URL.
                         continue;
                     }
-                    if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($bg[4], PHP_URL_HOST) == $gumlet_host) {
+                    if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host) {
                         preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $bg['image'], $size_matches);
                         if ($size_matches[0] && strlen($size_matches[0][0]) > 4) {
                             $bg['image'] = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $bg['image']);
@@ -350,43 +370,15 @@ class Gumlet
     /**
      * Add tag to dns prefetch cdn host
      */
-    public function add_links_and_scripts()
+    public function add_prefetch()
     {
-        $gumlet_host = parse_url($this->options['cdn_link'], PHP_URL_HOST);
-        if (isset($this->options['external_cdn_link'])) {
-            $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
-        }
-
         if (! empty($this->options['cdn_link'])) {
+            $gumlet_host = parse_url($this->options['cdn_link'], PHP_URL_HOST);
             printf(
                 '<link rel="dns-prefetch" href="%s"/>',
                 esc_attr('https://' . $gumlet_host)
             );
         }
-
-        printf(
-            '<script type="text/javascript">
-    window.GUMLET_CONFIG = {
-        data_src : "gmsrc",
-				lazy_load: %s,
-				auto_webp: %s,
-        default_params: {
-          compress: %s,
-          quality: "%s"
-        },
-        hosts: [{
-            current: "%s",
-            gumlet: "%s"
-        }]};
-			</script>
-      <script src="https://cdn.gumlet.com/gumlet.js/2.0/gumlet.min.js" type="text/javascript" async></script>',
-            (!empty($this->options['lazy_load'])) ? 'true' : 'false',
-            (!empty($this->options['auto_format'])) ? 'true' : 'false',
-            (!empty($this->options['auto_compress'])) ? 'true' : 'false',
-            (!empty($this->options['quality'])) ? $this->options['quality'] : '80',
-            isset($external_cdn_host) ? $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST),
-            $gumlet_host
-        );
     }
 
     /**
