@@ -270,7 +270,7 @@ class Gumlet
             $amp_endpoint = is_amp_endpoint();
         }
 
-        if (! empty($this->options['cdn_link']) && !is_admin() && !$amp_endpoint && !$_GET['ct_builder']) {
+        if (! empty($this->options['cdn_link']) && !is_admin() && !$amp_endpoint &&  !isset($_GET['ct_builder'])) {
             $gumlet_host = parse_url($this->options['cdn_link'], PHP_URL_HOST);
             if (isset($this->options['external_cdn_link'])) {
                 $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
@@ -316,7 +316,7 @@ class Gumlet
             // }
 
             // this replaces background URLs on any tags with data-bg
-            preg_match_all('~\bstyle=(\'|")(.*?)background(-image)?\s*:(.*?)\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $content, $matches);
+            preg_match_all('~\bstyle=(\'|")(((?!style).)*?)background(-image)?\s*:(.*?)\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $content, $matches);
 
             if (!empty($matches)) {
                 foreach ($matches[0] as $match) {
