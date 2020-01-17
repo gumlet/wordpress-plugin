@@ -52,8 +52,8 @@ class Gumlet
         add_filter('pum_popup_content', [ $this, 'replace_images_in_content' ], PHP_INT_MAX);
         add_filter('the_content', [ $this, 'replace_images_in_content' ], PHP_INT_MAX);
         add_filter('post_thumbnail_html', [ $this, 'replace_images_in_content' ], PHP_INT_MAX );
-        add_filter('get_image_tag', [ $this, 'replace_images_in_content' ], PHP_INT_MAX );
-		    add_filter('wp_get_attachment_image_attributes', [ $this, 'replace_images_in_content' ], PHP_INT_MAX );
+        // add_filter('get_image_tag', [ $this, 'replace_images_in_content' ], PHP_INT_MAX );
+		    // add_filter('wp_get_attachment_image_attributes', [ $this, 'replace_images_in_content' ], PHP_INT_MAX );
     }
 
     public function enqueue_script() {
@@ -270,7 +270,7 @@ class Gumlet
             $amp_endpoint = is_amp_endpoint();
         }
 
-        if (! empty($this->options['cdn_link']) && !is_admin() && !$amp_endpoint) {
+        if (! empty($this->options['cdn_link']) && !is_admin() && !$amp_endpoint && !$_GET['ct_builder']) {
             $gumlet_host = parse_url($this->options['cdn_link'], PHP_URL_HOST);
             if (isset($this->options['external_cdn_link'])) {
                 $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
