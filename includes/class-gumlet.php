@@ -282,10 +282,10 @@ class Gumlet
             if (preg_match_all('/<img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches)) {
                 foreach ($matches[0] as $img_tag) {
                     $doc = new DOMDocument();
-                    $doc->loadHTML($img_tag);
+                    @$doc->loadHTML($img_tag);
                     $imageTag = $doc->getElementsByTagName('img')[0];
                     $src = $imageTag->getAttribute('src');
-                    
+
                     if(!$src) {
                       $src = $imageTag->getAttribute('data-src');
                     }
