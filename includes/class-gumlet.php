@@ -48,10 +48,10 @@ class Gumlet
 
         add_action('wp_enqueue_scripts', [$this, 'enqueue_script'], 1);
 
-        // add_action('init', [$this, 'init_ob'], 1);
-        add_filter('pum_popup_content', [ $this, 'replace_images_in_content' ], PHP_INT_MAX);
-        add_filter('the_content', [ $this, 'replace_images_in_content' ], PHP_INT_MAX);
-        add_filter('post_thumbnail_html', [ $this, 'replace_images_in_content' ], PHP_INT_MAX );
+        add_action('init', [$this, 'init_ob'], 1);
+        // add_filter('pum_popup_content', [ $this, 'replace_images_in_content' ], PHP_INT_MAX);
+        // add_filter('the_content', [ $this, 'replace_images_in_content' ], PHP_INT_MAX);
+        // add_filter('post_thumbnail_html', [ $this, 'replace_images_in_content' ], PHP_INT_MAX );
         // add_filter('get_image_tag', [ $this, 'replace_images_in_content' ], PHP_INT_MAX );
 		    // add_filter('wp_get_attachment_image_attributes', [ $this, 'replace_images_in_content' ], PHP_INT_MAX );
     }
@@ -285,6 +285,11 @@ class Gumlet
                     $doc->loadHTML($img_tag);
                     $imageTag = $doc->getElementsByTagName('img')[0];
                     $src = $imageTag->getAttribute('src');
+                    
+                    if(!$src) {
+                      $src = $imageTag->getAttribute('data-src');
+                    }
+
                     if (strpos($src, ';base64,') !== false) {
                         // does not process data URL.
                         continue;
