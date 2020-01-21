@@ -53,16 +53,17 @@ class Gumlet
         // add_filter('the_content', [ $this, 'replace_images_in_content' ], PHP_INT_MAX);
         // add_filter('post_thumbnail_html', [ $this, 'replace_images_in_content' ], PHP_INT_MAX );
         // add_filter('get_image_tag', [ $this, 'replace_images_in_content' ], PHP_INT_MAX );
-		    // add_filter('wp_get_attachment_image_attributes', [ $this, 'replace_images_in_content' ], PHP_INT_MAX );
+            // add_filter('wp_get_attachment_image_attributes', [ $this, 'replace_images_in_content' ], PHP_INT_MAX );
     }
 
-    public function enqueue_script() {
-      if (isset($this->options['external_cdn_link'])) {
-          $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
-      }
+    public function enqueue_script()
+    {
+        if (isset($this->options['external_cdn_link'])) {
+            $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
+        }
 
-      wp_register_script('gumlet-script', 'https://cdn.gumlet.com/gumlet.js/2.0/gumlet.min.js', array(), '2.0', false);
-      wp_localize_script('gumlet-script', 'gumlet_wp_config', array(
+        wp_register_script('gumlet-script', 'https://cdn.gumlet.com/gumlet.js/2.0/gumlet.min.js', array(), '2.0', false);
+        wp_localize_script('gumlet-script', 'gumlet_wp_config', array(
         'gumlet_host' => parse_url($this->options['cdn_link'], PHP_URL_HOST),
         'current_host' => isset($external_cdn_host) ? $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST),
         'lazy_load' => (!empty($this->options['lazy_load'])) ? 1 : 0,
@@ -70,7 +71,7 @@ class Gumlet
         'auto_compress' => (!empty($this->options['auto_compress'])) ? 1 : 0,
         'quality' => (!empty($this->options['quality'])) ? $this->options['quality'] : 80
       ));
-      wp_enqueue_script('gumlet-script');
+        wp_enqueue_script('gumlet-script');
     }
 
     public function init_ob()
@@ -282,12 +283,13 @@ class Gumlet
             if (preg_match_all('/<img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches)) {
                 foreach ($matches[0] as $img_tag) {
                     $doc = new DOMDocument();
+                    // convert image tag to UTF-8 encoding.
+                    $img_tag = mb_convert_encoding($img_tag, 'HTML-ENTITIES', "UTF-8");
                     @$doc->loadHTML($img_tag);
                     $imageTag = $doc->getElementsByTagName('img')[0];
                     $src = $imageTag->getAttribute('src');
-
-                    if(!$src) {
-                      $src = $imageTag->getAttribute('data-src');
+                    if (!$src) {
+                        $src = $imageTag->getAttribute('data-src');
                     }
 
                     if (strpos($src, ';base64,') !== false) {
