@@ -44,6 +44,8 @@ class Gumlet
 
         // add_filter('wp_calculate_image_srcset', [ $this, 'calculate_image_srcset' ], 10, 5);
 
+        add_filter('script_loader_tag', [$this,'add_asyncdefer_attribute'], 10, 2);
+
         add_action('wp_head', [ $this, 'add_prefetch' ], 1);
 
         add_action('wp_enqueue_scripts', [$this, 'enqueue_script'], 1);
@@ -56,14 +58,31 @@ class Gumlet
             // add_filter('wp_get_attachment_image_attributes', [ $this, 'replace_images_in_content' ], PHP_INT_MAX );
     }
 
+    public function add_asyncdefer_attribute($tag, $handle) {
+        // if the unique handle/name of the registered script has 'async' in it
+        if (strpos($handle, 'async') !== false) {
+            // return the tag with the async attribute
+            return str_replace( '<script ', '<script async ', $tag );
+        }
+        // if the unique handle/name of the registered script has 'defer' in it
+        else if (strpos($handle, 'defer') !== false) {
+            // return the tag with the defer attribute
+            return str_replace( '<script ', '<script defer ', $tag );
+        }
+        // otherwise skip
+        else {
+            return $tag;
+        }
+    }
+
     public function enqueue_script()
     {
         if (isset($this->options['external_cdn_link'])) {
             $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
         }
 
-        wp_register_script('gumlet-script', 'https://cdn.gumlet.com/gumlet.js/2.0/gumlet.min.js', array(), '2.0', false);
-        wp_localize_script('gumlet-script', 'gumlet_wp_config', array(
+        wp_register_script('gumlet-script-async', 'https://cdn.gumlet.com/gumlet.js/2.0/gumlet.min.js', array(), '2.0', false);
+        wp_localize_script('gumlet-script-async', 'gumlet_wp_config', array(
         'gumlet_host' => parse_url($this->options['cdn_link'], PHP_URL_HOST),
         'current_host' => isset($external_cdn_host) ? $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST),
         'lazy_load' => (!empty($this->options['lazy_load'])) ? 1 : 0,
@@ -71,7 +90,7 @@ class Gumlet
         'auto_compress' => (!empty($this->options['auto_compress'])) ? 1 : 0,
         'quality' => (!empty($this->options['quality'])) ? $this->options['quality'] : 80
       ));
-        wp_enqueue_script('gumlet-script');
+        wp_enqueue_script('gumlet-script-async');
     }
 
     public function init_ob()
