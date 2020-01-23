@@ -322,7 +322,7 @@ class Gumlet
 
                     if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host) {
                         $imageTag->setAttribute("data-gmsrc", $src);
-                        $imageTag->removeAttribute("src");
+                        $imageTag->setAttribute("src", plugins_url('assets/images/pixel.png', __DIR__));
                         $imageTag->removeAttribute("srcset");
                         $imageTag->removeAttribute("data-src");
                         $imageTag->removeAttribute("data-srcset");
