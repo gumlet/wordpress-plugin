@@ -326,6 +326,7 @@ class Gumlet
                         $imageTag->removeAttribute("srcset");
                         $imageTag->removeAttribute("data-src");
                         $imageTag->removeAttribute("data-srcset");
+                        $imageTag->removeAttribute("data-lazy-srcset");
                         $imageTag->removeAttribute("data-lazy-src");
                         $new_img_tag = $doc->saveHTML($imageTag);
                         $content = str_replace($img_tag, $new_img_tag, $content);
