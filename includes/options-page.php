@@ -46,11 +46,9 @@ class Gumlet_Options_Page
     {
         ?>
 		<div class="wrap">
-
-			<h1>
-				<img src="<?php echo plugins_url('assets/images/gumlet-logo.png', __DIR__); ?>" alt="gumlet Logo" style="width:200px; margin-left: -12px;">
-			</h1>
-
+      <h1>
+			     <img src="<?php echo plugins_url('assets/images/gumlet-logo.png', __DIR__); ?>" alt="gumlet Logo" style="width:200px; margin-left: -12px;">
+      </h1>
 			<p><strong>Need help getting started?</strong> It's easy! Check out our
 				<a href="https://wordpress.org/plugins/gumlet/#installation" target="_blank">instructions.</a>
 			</p>
@@ -73,17 +71,10 @@ class Gumlet_Options_Page
                 </th>
                 <td>
                     <input id="gumlet_settings[external_cdn_link]" type="url" name="gumlet_settings[external_cdn_link]" placeholder="https://www.otherdomain.com" value="<?php echo $this->get_option('external_cdn_link'); ?>" class="regular-text code"/>
+                    <p style="color: #666">&nbsp;If you are using any other domain apart from your website main domain to serve images, please enter the domain name here.</p>
                 </td>
             </tr>
-						<tr>
-							<tr>
-									<th>
 
-									</th>
-									<td>
-											<p>If you are using any other domain apart from your website main domain to serve images, please enter the domain name here.</p>
-									</td>
-							</tr>
               <tr>
     							<th>
     								<label class="description" for="gumlet_settings[lazy_load]"><?php esc_html_e('Lazy Load Images', 'gumlet'); ?></label>
@@ -92,14 +83,6 @@ class Gumlet_Options_Page
     								<input id="gumlet_settings[lazy_load]" type="checkbox" name="gumlet_settings[lazy_load]" value="1" <?php checked($this->get_option('lazy_load')) ?> />
     							</td>
     						</tr>
-					<tr>
-							<th>
-								<label class="description" for="gumlet_settings[auto_format]"><?php esc_html_e('Auto Format Images', 'gumlet'); ?></label>
-							</th>
-							<td>
-								<input id="gumlet_settings[auto_format]" type="checkbox" name="gumlet_settings[auto_format]" value="1" <?php checked($this->get_option('auto_format')) ?> />
-							</td>
-						</tr>
 						<tr>
 							<th>
 								<label class="description" for="gumlet_settings[auto_compress]"><?php esc_html_e('Auto Compress Images', 'gumlet'); ?></label>
@@ -118,12 +101,31 @@ class Gumlet_Options_Page
 						</tr>
 					</tbody>
 				</table>
-
-				<p class="submit">
-					<input type="submit" class="button-primary" value="<?php esc_html_e('Save Options', 'gumlet'); ?>"/>
-				</p>
+        <hr>
+        <h3>*Advanced Settings*</h3>
+        <table class="form-table">
+					<tbody>
+						<tr>
+							<th>
+								<label class="description" for="gumlet_settings[original_images]"><?php esc_html_e('Use Original Images', 'gumlet'); ?></label>
+							</th>
+							<td>
+								<input id="gumlet_settings[original_images]" type="checkbox" name="gumlet_settings[original_images]" value="1" <?php checked($this->get_option('original_images')) ?> />
+                <p style="color: #666">If this is enabled (recommended), we will use original images before processing. <br>If this is not enabled, Gumlet will use images resized by wordpress for further processing.</p>
+							</td>
+						</tr>
+            <tr>
+							<th>
+							</th>
+							<td>
+								<input type="submit" class="button-primary" value="<?php esc_html_e('Save Options', 'gumlet'); ?>"/>
+							</td>
+						</tr>
+          </tbody>
+        </table>
 			</form>
-
+      <br>
+      <br>
 			<p class="description">
 				This plugin is powered by
 				<a href="https://www.gumlet.com" target="_blank">Gumlet</a>. You can find and contribute to the code on

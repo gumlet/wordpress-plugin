@@ -11,7 +11,7 @@
  * Plugin Name: Gumlet
  * Plugin URI:  https://github.com/gumlet/wordpress-plugin
  * Description: A WordPress plugin to automatically load all your existing (and future) WordPress images via the <a href="http://www.gumlet.com" target="_blank">Gumlet</a> service for smaller, faster, and better looking images.
- * Version:     1.1.11
+ * Version:     1.1.12
  * Author:      Gumlet
  * Author URI:  https://www.gumlet.com
  */
@@ -40,3 +40,9 @@ function gumlet_plugin_admin_action_links( $links, $file ) {
 }
 
 add_filter( 'plugin_action_links', 'gumlet_plugin_admin_action_links', 10, 2 );
+
+register_activation_hook( __FILE__, 'gumlet_plugin_activate' );
+function gumlet_plugin_activate() {
+    // plugin activation code here...
+    update_option('gumlet_settings', ["lazy_load" => 1, "original_images" => 1, "auto_compress"=> 1] );
+}

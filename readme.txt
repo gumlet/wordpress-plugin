@@ -4,7 +4,7 @@ Contributors: adityapatadia
 Tags: images, image management, image manipulation, image optimization, image compression, lazy load images, gumlet, picture, pictures, thumbnails, cdn, content delivery network, jpeg, png, webp
 Requires at least: 3.3
 Tested up to: 5.3.2
-Stable tag: 1.1.11
+Stable tag: 1.1.12
 License: BSD-2
 License URI: http://opensource.org/licenses/BSD-2-Clause
 
@@ -122,3 +122,13 @@ A: Yes! EXIF data stores camera settings, focal length, date, time and location 
 4. Once the source is created, add that subdomain in **Step 5** above.
 
 If you need any help, you can reach out at support@gumlet.com.
+
+== Changelog ==
+
+= 1.1.12
+* Added option to use original or processed images
+* Bug fixes for default options
+* Removed option for auto-webp. The setting can be changed for a source from Gumlet panel
+
+= 1.1.11
+* Improved compatibility with some lazy-load plugins.

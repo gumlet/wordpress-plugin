@@ -30,9 +30,7 @@ class Gumlet
     public function __construct()
     {
         $this->options = get_option('gumlet_settings', []);
-
         $this->logger = GumletLogger::instance();
-
 
         // Change filter load order to ensure it loads after other CDN url transformations i.e. Amazon S3 which loads at position 99.
 
@@ -86,7 +84,6 @@ class Gumlet
         'gumlet_host' => parse_url($this->options['cdn_link'], PHP_URL_HOST),
         'current_host' => isset($external_cdn_host) ? $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST),
         'lazy_load' => (!empty($this->options['lazy_load'])) ? 1 : 0,
-        'auto_format' => (!empty($this->options['auto_format'])) ? 1 : 0,
         'auto_compress' => (!empty($this->options['auto_compress'])) ? 1 : 0,
         'quality' => (!empty($this->options['quality'])) ? $this->options['quality'] : 80
       ));
@@ -130,7 +127,7 @@ class Gumlet
      * @param  mixed $default
      * @return mixed
      */
-    public function get_option($key, $default = '')
+    public function get_option($key, $default = null)
     {
         return array_key_exists($key, $this->options) ? $this->options[ $key ] : $default;
     }
@@ -316,7 +313,7 @@ class Gumlet
                         continue;
                     }
                     preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $src, $size_matches);
-                    if ($size_matches[0] && strlen($size_matches[0][0]) > 4) {
+                    if ($size_matches[0] && strlen($size_matches[0][0]) > 4 && $this->get_option("original_images")) {
                         $src = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $src);
                     }
 
@@ -354,7 +351,7 @@ class Gumlet
                     }
                     if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($bg[4], PHP_URL_HOST) == $gumlet_host) {
                         preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $bg['image'], $size_matches);
-                        if ($size_matches[0] && strlen($size_matches[0][0]) > 4) {
+                        if ($size_matches[0] && strlen($size_matches[0][0]) > 4  && $this->get_option("original_images")) {
                             $bg['image'] = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $bg['image']);
                         }
                         $bg_less_match = str_replace($bg[0], '', $match);
@@ -378,7 +375,7 @@ class Gumlet
                     }
                     if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host) {
                         preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $bg['image'], $size_matches);
-                        if ($size_matches[0] && strlen($size_matches[0][0]) > 4) {
+                        if ($size_matches[0] && strlen($size_matches[0][0]) > 4  && $this->get_option("original_images")) {
                             $bg['image'] = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $bg['image']);
                         }
                         $parsed_url = parse_url($bg['image']);
@@ -417,11 +414,6 @@ class Gumlet
     protected function get_global_params()
     {
         $params = [];
-
-        // For now, only "auto" is supported.
-        if (! empty($this->options['auto_format'])) {
-            $params["format"] = "auto";
-        }
 
         if (! empty($this->options['quality'])) {
             $params["quality"] = $this->options['quality'];
