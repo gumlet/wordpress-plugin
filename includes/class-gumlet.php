@@ -56,16 +56,17 @@ class Gumlet
             // add_filter('wp_get_attachment_image_attributes', [ $this, 'replace_images_in_content' ], PHP_INT_MAX );
     }
 
-    public function add_asyncdefer_attribute($tag, $handle) {
+    public function add_asyncdefer_attribute($tag, $handle)
+    {
         // if the unique handle/name of the registered script has 'async' in it
         if (strpos($handle, 'async') !== false) {
             // return the tag with the async attribute
-            return str_replace( '<script ', '<script async ', $tag );
+            return str_replace('<script ', '<script async ', $tag);
         }
         // if the unique handle/name of the registered script has 'defer' in it
-        else if (strpos($handle, 'defer') !== false) {
+        elseif (strpos($handle, 'defer') !== false) {
             // return the tag with the defer attribute
-            return str_replace( '<script ', '<script defer ', $tag );
+            return str_replace('<script ', '<script defer ', $tag);
         }
         // otherwise skip
         else {
@@ -75,19 +76,21 @@ class Gumlet
 
     public function enqueue_script()
     {
-        if (isset($this->options['external_cdn_link'])) {
-            $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
-        }
+        if (! empty($this->options['cdn_link'])) {
+            if (isset($this->options['external_cdn_link'])) {
+                $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
+            }
 
-        wp_register_script('gumlet-script-async', 'https://cdn.gumlet.com/gumlet.js/2.0/gumlet.min.js', array(), '2.0', false);
-        wp_localize_script('gumlet-script-async', 'gumlet_wp_config', array(
-        'gumlet_host' => parse_url($this->options['cdn_link'], PHP_URL_HOST),
-        'current_host' => isset($external_cdn_host) ? $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST),
-        'lazy_load' => (!empty($this->options['lazy_load'])) ? 1 : 0,
-        'auto_compress' => (!empty($this->options['auto_compress'])) ? 1 : 0,
-        'quality' => (!empty($this->options['quality'])) ? $this->options['quality'] : 80
-      ));
-        wp_enqueue_script('gumlet-script-async');
+            wp_register_script('gumlet-script-async', 'https://cdn.gumlet.com/gumlet.js/2.0/gumlet.min.js', array(), '2.0', false);
+            wp_localize_script('gumlet-script-async', 'gumlet_wp_config', array(
+              'gumlet_host' => parse_url($this->options['cdn_link'], PHP_URL_HOST),
+              'current_host' => isset($external_cdn_host) ? $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST),
+              'lazy_load' => (!empty($this->options['lazy_load'])) ? 1 : 0,
+              'auto_compress' => (!empty($this->options['auto_compress'])) ? 1 : 0,
+              'quality' => (!empty($this->options['quality'])) ? $this->options['quality'] : 80
+            ));
+            wp_enqueue_script('gumlet-script-async');
+        }
     }
 
     public function init_ob()
@@ -280,7 +283,8 @@ class Gumlet
      */
     public function replace_images_in_content($content)
     {
-        // $content = file_get_contents("/Users/adityapatadia/Turing/wordpress/wp-content/plugins/gumlet/test.html");
+        $excluded_urls = explode("\n", $this->get_option("exclude_images"));
+
         // Added null to apply filters wp_get_attachment_url to improve compatibility with https://en-gb.wordpress.org/plugins/amazon-s3-and-cloudfront/ - does not break wordpress if the plugin isn't present.
         $amp_endpoint = false;
         if (function_exists('is_amp_endpoint')) {
@@ -306,6 +310,14 @@ class Gumlet
                     $src = $imageTag->getAttribute('src');
                     if (!$src) {
                         $src = $imageTag->getAttribute('data-src');
+                    }
+
+                    if(in_array($src, $excluded_urls)) {
+                      // don't process excluded URLs
+                      $imageTag->setAttribute("data-gumlet", 'false');
+                      $new_img_tag = $doc->saveHTML($imageTag);
+                      $content = str_replace($img_tag, $new_img_tag, $content);
+                      continue;
                     }
 
                     if (strpos($src, ';base64,') !== false) {
@@ -350,6 +362,10 @@ class Gumlet
                         continue;
                     }
                     if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($bg[4], PHP_URL_HOST) == $gumlet_host) {
+                        if(in_array($bg['image'], $excluded_urls)) {
+                          // don't process excluded URLs
+                          continue;
+                        }
                         preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $bg['image'], $size_matches);
                         if ($size_matches[0] && strlen($size_matches[0][0]) > 4  && $this->get_option("original_images")) {
                             $bg['image'] = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $bg['image']);
@@ -373,6 +389,12 @@ class Gumlet
                         // does not process data URL.
                         continue;
                     }
+
+                    if(in_array($original_bg, $excluded_urls)) {
+                      // don't process excluded URLs
+                      continue;
+                    }
+
                     if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host) {
                         preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $bg['image'], $size_matches);
                         if ($size_matches[0] && strlen($size_matches[0][0]) > 4  && $this->get_option("original_images")) {

@@ -49,11 +49,24 @@ class Gumlet_Options_Page
       <h1>
 			     <img src="<?php echo plugins_url('assets/images/gumlet-logo.png', __DIR__); ?>" alt="gumlet Logo" style="width:200px; margin-left: -12px;">
       </h1>
-			<p><strong>Need help getting started?</strong> It's easy! Check out our
-				<a href="https://wordpress.org/plugins/gumlet/#installation" target="_blank">instructions.</a>
-			</p>
+      <?php
+         if( isset($_GET['settings-updated']) ){
+      ?>
+      <div class="notice notice-warning">
+        <p><strong>Heads up! Clear cache:</strong> We recommend you clear cache after enabling Gumlet.</p>
+      </div>
+      <?php
+        }
+      ?>
+      <div class="notice notice-info">
+        <p><strong>Important!</strong> Gumlet <strong>does not</strong> work well with other lazy-load plugins. We recommend you <strong>disable</strong> all other lazy-load plugins and lazy-load settings in themes.</p>
+        <p><strong>Need help getting started?</strong> It's easy! Check out our
+    				<a href="https://docs.gumlet.com/platform-guides/wordpress-integration" target="_blank">instructions.</a></p>
+      </div>
+
 
 			<form method="post" action="<?php echo admin_url('options.php'); ?>">
+
 				<?php settings_fields('gumlet_settings_group'); ?>
 				<table class="form-table">
 					<tbody>
@@ -62,7 +75,7 @@ class Gumlet_Options_Page
 								<label class="description" for="gumlet_settings[cdn_link]"><?php esc_html_e('Gumlet Source', 'gumlet'); ?> *</label>
 							</th>
 							<td>
-								<input id="gumlet_settings[cdn_link]" type="url" name="gumlet_settings[cdn_link]" placeholder="https://yourcompany.gumlet.com" value="<?php echo $this->get_option('cdn_link'); ?>" class="regular-text code"/>
+								<input id="gumlet_settings[cdn_link]" type="url" name="gumlet_settings[cdn_link]" placeholder="https://yourcompany.gumlet.com" value="<?php echo $this->get_option('cdn_link'); ?>" required="required" class="regular-text code"/>
 							</td>
 						</tr>
             <tr>
@@ -102,7 +115,7 @@ class Gumlet_Options_Page
 					</tbody>
 				</table>
         <hr>
-        <h3>*Advanced Settings*</h3>
+        <h3>* Advanced Settings *</h3>
         <table class="form-table">
 					<tbody>
 						<tr>
@@ -116,6 +129,15 @@ class Gumlet_Options_Page
 						</tr>
             <tr>
 							<th>
+								<label class="description" for="gumlet_settings[exclude_images]"><?php esc_html_e('Exclude Image URLs', 'gumlet'); ?></label>
+							</th>
+							<td>
+								<textarea id="gumlet_settings[exclude_images]" style="width: 500px; height: 100px" placeholder="Enter every URL in new line."  name="gumlet_settings[exclude_images]"><?php print($this->get_option('exclude_images')) ?></textarea>
+                <p style="color: #666">The URLs you enter here will not be processed by Gumlet.</p>
+							</td>
+						</tr>
+            <tr>
+							<th>
 							</th>
 							<td>
 								<input type="submit" class="button-primary" value="<?php esc_html_e('Save Options', 'gumlet'); ?>"/>
@@ -124,7 +146,6 @@ class Gumlet_Options_Page
           </tbody>
         </table>
 			</form>
-      <br>
       <br>
 			<p class="description">
 				This plugin is powered by
