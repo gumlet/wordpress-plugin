@@ -1,10 +1,13 @@
-=== Gumlet Automatic Image Optimization, Compression, and Lazy Load ===
+=== Gumlet - Image optimization with Resize, Compression, Lazy load, Caching & CDN delivery ===
 
 Contributors: adityapatadia
 Tags: images, image management, image manipulation, image optimization, image compression, lazy load images, gumlet, picture, pictures, thumbnails, cdn, content delivery network, jpeg, png, webp
+Author: Gumlet
+Author URI: https://www.gumlet.com
 Requires at least: 3.3
-Tested up to: 5.4.0
-Stable tag: 1.1.13
+Requires PHP: 5.6.0
+Tested up to: 5.4
+Stable tag: 1.1.14
 License: BSD-2
 License URI: http://opensource.org/licenses/BSD-2-Clause
 
@@ -12,41 +15,24 @@ Official WordPress plugin to automatically load all your WordPress images via th
 
 == Description ==
 
-Make your website faster by optimizing your JPEG and PNG images. This plugin automatically resizes, optimizes and compresses all your images by integrating with the popular image compression service Gumlet.
+> **Gumlet is the One plugin to rule all 6 steps of image optimization in one go**
+>
+> * Auto resize images based on user screen size
+> * Visually lossless compression
+> * Convert images to WebP format
+> * In-built Lazy load
+> * Optimized images cached on Gumlet cloud
+> * CDN delivery by AWS CloudFront (215+ locations)
 
-= Why use Gumlet image optimizer? =
+Try our fully functional free plan now!
 
-* **Automatically optimize** your current and future images.
-* **SaaS based** optimization to avoid any load on your server.
-* **Original images** are never modified.
-* **Automatically resize** all images as per client device size and image container.
-* **CDN Delivery** - All your images are delivered via CloudFront CDN.
-* **Progressive JPEG** - Display JPEG images more quickly with progressive JPEG encoding.
-* **Lazy load** - Defer offscreen images with automatic lazy load built-in.
-* **Animated images** - PNG and GIF compression and resize.
-* **SVG Support** - Yes, your SVG images can also be compressed and Gumlet optimizes them automatically.
-* **WooCommerce** compatible.
-* **Retina screens** are supported by delivering right sized image.
-* **Analytics** and Usage on the Gumlet dashboard.
-* **Color profiles** are automatically translated to standard RGB color.
-* **Convert CMYK to RGB** to save more space and add compatibility.
-* **No limit** on file size or number of requests.
-* **1 GB free** bandwidth every month with unlimited requests.
-* **No lock in!** Disable the plugin and your images will be served as they were before installation.
+Images make up more than 70% of your page weight. Optimizing images is the easiest way to improve page speed. A faster site leads to more engagement, sales and sign ups. Gumlet will help you INSTANTLY achieve maximum possible image optimization. This will also boost your image SEO.
 
-= How does it work? =
+This is an **install and forget about it** plugin. As soon as the plugin is installed all of the images on your site will be optimized. Gumlet does not touch your original images, they remain as it is. Our JavaScript detects the user device screen size and optimizes each image on the page in real time without any delay. All of this is done automatically, no manual settings required.
 
-Gumlet service sits between your users and your image storage and automatically keeps delivering most optimized images to end users.
+= WHY DO I NEED IMAGE OPTIMIZATION? =
 
-Gumlet service includes origin cache, image resize and optimization service, processed cache and CloudFront Global CDN. You are free to choose storage of your choice and you always retain control over your original master images. This also helps you stay away from vendor lock-in.
-
-![how gumlet works](https://demo.gumlet.com/infographics.svg?w=400)
-
-= Getting Started =
-
-It's super easy to get started  with this plugin. Just follow the steps given on [Installation](https://wordpress.org/plugins/gumlet/#installation) page.
-
-= Fix your Google PageSpeed image opportunities =
+### Fix your Google PageSpeed image opportunities
 Is your Google PageSpeed performance test opportunities telling you to:
 
 - Defer Offscreen Images
@@ -56,31 +42,78 @@ Is your Google PageSpeed performance test opportunities telling you to:
 - Use WebP images
 - Or, Serve Images in Next-Gen Formats
 
-Gumlet is the answer with options for automating every aspect of image optimization.
+Test your website with [GTmetrix](https://gtmetrix.com) or [Google PageSpeed Insights](https://developers.google.com/speed/pagespeed/insights/). If they identify any image related issues like above, Gumlet will solve them.
 
-= WooCommerce compatibility =
+Even if you are using another image optimization plugin, chances are they are not doing all of the possible optimization. Get a free image optimization report with our [analyzer tool](https://analyser.gumlet.com). We generally deliver 25-30% extra optimization over and above other plugins.
 
-This plugin is *fully compatible with WooCommerce*. Just go ahead and enable the plugin and your e-commerce store images will be fully optimized.
+[youtube https://www.youtube.com/watch?v=1PVnuuKcczk]
 
-= Defer Offscreen Images =
+= ACCELERATE YOUR JS AND CSS FILES =
 
-Gumlet has lazy load built-in. If your page has a bunch of images below the fold, lazy loading will drastically speed up your page by serving only the images being viewed and delaying others further down the page.
+Gumlet CDN can be integrated with popular plugins like WP Rocket to deliver your non-image files via CDN too. Our World class CDN would make sure your website loads as fast as possible > [Read more](https://docs.gumlet.com/platform-guides/wordpress-integration#bonus-serve-css-and-js-files-via-gumlet-cdn).
 
-= Automatic Resize =
+= WHAT OUR USERS HAVE TO SAY =
 
-Gumlet automatically resizes images all your images according to container size and client device. If a person visits your site from an iPhone 6, images will be delivered as per iPhone screen size and DPR. This ensures that unnecessary bandwidth is not wasted by loading huge images on mobile devices.
+Gumlet image optimization is used by more than 3000 sites across the world. From small blogs to giant publishers like [BloombergQuint](https://bloombergquint.com) rely on us for optimized image delivery.
 
-= WebP Images =
+★★★★★
+> "A very good Image optimization plugin" - [crackverbal](https://profiles.wordpress.org/crackverbal/)
 
-We automatically detect if your users' browser supports WebP images and if it does, we will deliver image in this Next-Gen format. It can reduce the image size by at least 20-30% compared to JPEG.
+★★★★★
+> "It just works" - [claytonchase](https://profiles.wordpress.org/claytonchase/)
 
-= Security =
+★★★★★
+> "Simply Great" - [pawelszejko](https://profiles.wordpress.org/pawelszejko/)
 
-All images are loaded via HTTPS protocol and we use highest security measures to prevent any eavesdropping in communication between client and servers.
+= PRICING PLANS =
+Like the plugin itself, the pricing plans are super simple and scale friendly!
+We only charge for CDN bandwidth consumed for image delivery. There are no charges or limits on the number of images original images, or optimisations performed. You get **1 GB** of CDN bandwidth FREE to try out the plugin.
+
+More details on our [website](https://www.gumlet.com/pricing)
+
+= THE COMPLETE FEATURE LIST =
+
+* **Unlimited image processing** no quotas or limits on number of images.
+* **All image formats** supported. SVG, GIF, PNG, JPEG, everything.
+* **Retina screen** compatible.
+* **Cloud Based** - Images are optimized and stored on our server to save your storage space and bandwidth
+* **No maintenance** after integration. No need to run any batch processing scripts.
+* **Reliable** - 99.5% uptime SLA
+* **Secure** - All images are loaded via HTTPS protocol
+* **Support** - Complete integration support. Reach-out to us anytime via chat or email.
+* **WooCommerce** compatible.
+* **Delivery Analytics** -  Keep a tab on response times, usage details in real time
+* **Alerts and reports** - Get customized alerts and reports on image related data.
+* **No lock in!** Disable the plugin and your images will be served as they were before installation.
+* **Powerful Image API** - full and free access [Documentation](https://docs.gumlet.com/developers/api-reference)
+* **Progressive JPEG** – Display JPEG images more quickly with progressive JPEG encoding.
+* **Keep same storage** - Optimize images stored in external sources like Amazon S3
+* **Image Metadata** - Keep (for photographers) or Remove (for optimisation), you choose!
+* **GDPR compliant** - We do not record or store any personal information about your users.
+
+= 15 MINUTE INSTALLATION GUIDE =
+
+Yes, it actually takes only 15 minutes to set up Gumlet for your entire website. Check out our super [simple installation guide](https://docs.gumlet.com/platform-guides/wordpress-integration)
+
+Don’t wait now, just give it a try! There is nothing to lose 😀
+
+= Get in touch! =
+
+Still not sure? Come chat with us, we will honestly help you make the right choice.
+
+* [Website](https://gumlet.com) (Chat available)
+* Write to us at: support@gumlet.com
+* Twitter - [gumletapp](https://twitter.com/gumletapp)
+* Facebook - [gumletapp](https://www.facebook.com/gumletapp)
 
 == Screenshots ==
 
-1. Gumlet Settings Panel
+1. Wordpress settings panel
+2. Gumlet add source screen
+3. How does it work?
+4. Image processing and delivery locations
+5. Usage metrics on Gumlet dashboard
+6. Delivery metrics on Gumlet dashboard
 
 == Frequently Asked Questions ==
 
@@ -117,13 +150,16 @@ A: Yes! EXIF data stores camera settings, focal length, date, time and location 
 = Creating Source =
 
 1. If you don't already have an Gumlet account then sign up at [gumlet.com](https://www.gumlet.com).
-2. Create a [Web Folder](https://docs.gumlet.com/getting-started/setup-image-source#web-folders) gumlet source with the `Base URL` set to your WordPress root URL (__without__ the `wp-content` part). For example, if your WordPress instance is at [http://example.com](http://example.com) and an example image is `http://example.com/wp-content/uploads/2017/01/image.jpg` then your source's `Base URL` would be just `http://example.com/`.
+2. Create a [Wordpress](https://docs.gumlet.com/getting-started/setup-image-source) Gumlet source with the `Wordpress URL` set to your WordPress website URL.
 3. Choose a **subdomain** which fits your website name. For example, if your site is https://fashion.com, you can choose subdomain like https://fashion.gumlet.com.
 4. Once the source is created, add that subdomain in **Step 5** above.
 
 If you need any help, you can reach out at support@gumlet.com.
 
 == Changelog ==
+
+= 1.1.14 =
+Fixes some minor issues while displaying images.
 
 = 1.1.12
 * Added option to use original or processed images

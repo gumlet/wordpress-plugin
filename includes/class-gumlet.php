@@ -329,7 +329,7 @@ class Gumlet
                         $src = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $src);
                     }
 
-                    if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host) {
+                    if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host || !parse_url($src, PHP_URL_HOST)) {
                         $imageTag->setAttribute("data-gmsrc", $src);
                         $imageTag->setAttribute("src", plugins_url('assets/images/pixel.png', __DIR__));
                         $imageTag->removeAttribute("srcset");
@@ -361,7 +361,7 @@ class Gumlet
                         // does not process data URL.
                         continue;
                     }
-                    if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($bg[4], PHP_URL_HOST) == $gumlet_host) {
+                    if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($bg[4], PHP_URL_HOST) == $gumlet_host || !parse_url($bg[4], PHP_URL_HOST)) {
                         if(in_array($bg['image'], $excluded_urls)) {
                           // don't process excluded URLs
                           continue;
@@ -395,7 +395,7 @@ class Gumlet
                       continue;
                     }
 
-                    if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host) {
+                    if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host || !parse_url($bg[4], PHP_URL_HOST)) {
                         preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $bg['image'], $size_matches);
                         if ($size_matches[0] && strlen($size_matches[0][0]) > 4  && $this->get_option("original_images")) {
                             $bg['image'] = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $bg['image']);

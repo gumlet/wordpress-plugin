@@ -161,7 +161,7 @@ class Gumlet_Options_Page
      */
     public function gumlet_add_options_link()
     {
-        add_options_page('gumlet', 'gumlet', 'manage_options', 'gumlet-options', [ $this, 'gumlet_options_page' ]);
+        add_options_page('Gumlet', 'Gumlet', 'manage_options', 'gumlet-options', [ $this, 'gumlet_options_page' ]);
     }
 
     /**
