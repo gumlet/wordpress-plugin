@@ -284,7 +284,7 @@ class Gumlet
     public function replace_images_in_content($content)
     {
         $excluded_urls = explode("\n", $this->get_option("exclude_images"));
-
+        $excluded_urls = array_map('trim', $excluded_urls);
         // Added null to apply filters wp_get_attachment_url to improve compatibility with https://en-gb.wordpress.org/plugins/amazon-s3-and-cloudfront/ - does not break wordpress if the plugin isn't present.
         $amp_endpoint = false;
         if (function_exists('is_amp_endpoint')) {

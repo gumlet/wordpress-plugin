@@ -133,7 +133,7 @@ class Gumlet_Options_Page
 							</th>
 							<td>
 								<textarea id="gumlet_settings[exclude_images]" style="width: 500px; height: 100px" placeholder="Enter every URL in new line."  name="gumlet_settings[exclude_images]"><?php print($this->get_option('exclude_images')) ?></textarea>
-                <p style="color: #666">The URLs you enter here will not be processed by Gumlet.</p>
+                <p style="color: #666">The URLs you enter here will not be processed by Gumlet. Please enter one URL per line.</p>
 							</td>
 						</tr>
             <tr>
