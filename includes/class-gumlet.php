@@ -301,10 +301,10 @@ class Gumlet
 
             // replaces src with data-gmsrc and removes srcset from images
             if (preg_match_all('/<img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches)) {
-                foreach ($matches[0] as $img_tag) {
+                foreach ($matches[0] as $unconverted_img_tag) {
                     $doc = new DOMDocument();
                     // convert image tag to UTF-8 encoding.
-                    $img_tag = mb_convert_encoding($img_tag, 'HTML-ENTITIES', "UTF-8");
+                    $img_tag = mb_convert_encoding($unconverted_img_tag, 'HTML-ENTITIES', "UTF-8");
                     @$doc->loadHTML($img_tag);
                     $imageTag = $doc->getElementsByTagName('img')[0];
                     $src = $imageTag->getAttribute('src');
@@ -338,7 +338,7 @@ class Gumlet
                         $imageTag->removeAttribute("data-lazy-srcset");
                         $imageTag->removeAttribute("data-lazy-src");
                         $new_img_tag = $doc->saveHTML($imageTag);
-                        $content = str_replace($img_tag, $new_img_tag, $content);
+                        $content = str_replace($unconverted_img_tag, $new_img_tag, $content);
                     }
                 }
             }

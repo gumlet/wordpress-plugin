@@ -7,7 +7,7 @@ Author URI: https://www.gumlet.com
 Requires at least: 3.3
 Requires PHP: 5.6.0
 Tested up to: 5.4
-Stable tag: 1.1.16
+Stable tag: 1.1.17
 License: BSD-2
 License URI: http://opensource.org/licenses/BSD-2-Clause
 
@@ -157,6 +157,9 @@ A: Yes! EXIF data stores camera settings, focal length, date, time and location 
 If you need any help, you can reach out at support@gumlet.com.
 
 == Changelog ==
+
+= 1.1.17 =
+Bug fix for image URLs with non-english characters.
 
 = 1.1.14 =
 Fixes some minor issues while displaying images.
