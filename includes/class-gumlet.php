@@ -324,6 +324,12 @@ class Gumlet
                         // does not process data URL.
                         continue;
                     }
+
+                    if(strpos(stripcslashes($src), '"') !== false) {
+                      // this URL is actually part of JSON data. It has quotes in it. We will ignore this URL
+                      continue;
+                    }
+
                     preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $src, $size_matches);
                     if ($size_matches[0] && strlen($size_matches[0][0]) > 4 && $this->get_option("original_images")) {
                         $src = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $src);
@@ -361,7 +367,7 @@ class Gumlet
                         // does not process data URL.
                         continue;
                     }
-                    if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($bg[4], PHP_URL_HOST) == $gumlet_host || !parse_url($bg[4], PHP_URL_HOST)) {
+                    if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($bg[4], PHP_URL_HOST) == $gumlet_host) {
                         if(in_array($bg['image'], $excluded_urls)) {
                           // don't process excluded URLs
                           continue;
@@ -395,7 +401,7 @@ class Gumlet
                       continue;
                     }
 
-                    if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host || !parse_url($bg[4], PHP_URL_HOST)) {
+                    if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host) {
                         preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $bg['image'], $size_matches);
                         if ($size_matches[0] && strlen($size_matches[0][0]) > 4  && $this->get_option("original_images")) {
                             $bg['image'] = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $bg['image']);
