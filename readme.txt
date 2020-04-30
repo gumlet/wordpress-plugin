@@ -7,7 +7,7 @@ Author URI: https://www.gumlet.com
 Requires at least: 3.3
 Requires PHP: 5.6.0
 Tested up to: 5.4
-Stable tag: 1.1.19
+Stable tag: 1.1.20
 License: BSD-2
 License URI: http://opensource.org/licenses/BSD-2-Clause
 
@@ -131,32 +131,15 @@ A: Yes! EXIF data stores camera settings, focal length, date, time and location 
 
 == Installation ==
 
-= From your WordPress dashboard =
+Please follow our official installation guide: [https://docs.gumlet.com/platform-guides/wordpress-integration](https://docs.gumlet.com/platform-guides/wordpress-integration)
 
-1. Visit *Plugins > Add New*.
-2. Search for 'gumlet' and press the 'Install Now' button for the plugin named 'Gumlet Automatic Image Optimization, Compression, and Lazy Load' by 'Gumlet'.
-3. Activate the plugin from your *Plugins* page.
-4. Go to the *Settings > Gumlet* page.
-5. In the **Gumlet Source** input, enter the **subdomain** you created on https://www.gumlet.com/user/sources. (Check instructions below)
-
-= From WordPress.org =
-
-1. Download the plugin named 'Gumlet Automatic Image Optimization, Compression, and Lazy Load' by 'Gumlet'.
-2. Upload the `gumlet` directory to your `/wp-content/plugins/` directory, using your favorite method (ftp, sftp, scp, etc...)
-3. Activate the plugin from your *Plugins* page.
-4. Go to the *Settings > Gumlet* page.
-5. In the **Gumlet Source** input, enter the subdomain you created on https://www.gumlet.com/user/sources. (Check instructions below)
-
-= Creating Source =
-
-1. If you don't already have an Gumlet account then sign up at [gumlet.com](https://www.gumlet.com).
-2. Create a [Wordpress](https://docs.gumlet.com/getting-started/setup-image-source) Gumlet source with the `Wordpress URL` set to your WordPress website URL.
-3. Choose a **subdomain** which fits your website name. For example, if your site is https://fashion.com, you can choose subdomain like https://fashion.gumlet.com.
-4. Once the source is created, add that subdomain in **Step 5** above.
-
-If you need any help, you can reach out at support@gumlet.com.
+If you need any help, you can reach out to us at support@gumlet.com.
 
 == Changelog ==
+
+= 1.1.20 =
+* Bug fix: Settings are not wiped out on plugin disable and update.
+* Feature: Added option to take image width either from <img> width attribute or calculate on-the-fly.
 
 = 1.1.17 =
 Bug fix for image URLs with non-english characters.

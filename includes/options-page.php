@@ -124,7 +124,16 @@ class Gumlet_Options_Page
 							</th>
 							<td>
 								<input id="gumlet_settings[original_images]" type="checkbox" name="gumlet_settings[original_images]" value="1" <?php checked($this->get_option('original_images')) ?> />
-                <p style="color: #666">If this is enabled (recommended), we will use original images before processing. <br>If this is not enabled, Gumlet will use images resized by wordpress for further processing.</p>
+                <p style="color: #666">If this is enabled (recommended), plugin will use original images before processing. <br>If this is not enabled, Gumlet will use images resized by wordpress for further processing.</p>
+							</td>
+						</tr>
+            <tr>
+							<th>
+								<label class="description" for="gumlet_width_from_img"><?php esc_html_e('Use <img> Width', 'gumlet'); ?></label>
+							</th>
+							<td>
+								<input id="gumlet_width_from_img" type="checkbox" name="gumlet_width_from_img" value="1" <?php checked(get_option('gumlet_width_from_img')) ?> />
+                <p style="color: #666">If this is enabled, plugin will use width from &lt;img&gt; element width attribute rather than calculating actual width.</p>
 							</td>
 						</tr>
             <tr>
@@ -170,6 +179,7 @@ class Gumlet_Options_Page
     public function gumlet_register_settings()
     {
         register_setting('gumlet_settings_group', 'gumlet_settings');
+        register_setting('gumlet_settings_group', 'gumlet_width_from_img', ["type"=> 'boolean', "default"=>true]);
     }
 
     /**
