@@ -86,7 +86,7 @@ class Gumlet
               'gumlet_host' => parse_url($this->options['cdn_link'], PHP_URL_HOST),
               'current_host' => isset($external_cdn_host) ? $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST),
               'lazy_load' => (!empty($this->options['lazy_load'])) ? 1 : 0,
-              'width_from_img' => get_option('width_from_img', 1) ? 1 : 0,
+              'width_from_img' => get_option('gumlet_width_from_img') ? 1 : 0,
               'auto_compress' => (!empty($this->options['auto_compress'])) ? 1 : 0,
               'quality' => (!empty($this->options['quality'])) ? $this->options['quality'] : 80
             ));
