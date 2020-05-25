@@ -24,6 +24,8 @@ class Gumlet
      */
     protected $buffer_started = false;
 
+    private $doingAjax = false;
+
     /**
      * Gumlet constructor.
      */
@@ -31,6 +33,8 @@ class Gumlet
     {
         $this->options = get_option('gumlet_settings', []);
         $this->logger = GumletLogger::instance();
+
+        $this->doingAjax = (function_exists("wp_doing_ajax") && wp_doing_ajax()) || (defined('DOING_AJAX') && DOING_AJAX);
 
         // Change filter load order to ensure it loads after other CDN url transformations i.e. Amazon S3 which loads at position 99.
 
@@ -74,9 +78,46 @@ class Gumlet
         }
     }
 
+    protected function isWelcome()
+    {
+        $amp_endpoint = false;
+        if (function_exists('is_amp_endpoint')) {
+            $amp_endpoint = is_amp_endpoint();
+        }
+
+        if ($amp_endpoint) {
+            return false;
+        }
+
+        if (isset($_SERVER['HTTP_REFERER'])) {
+            $admin = parse_url(admin_url());
+            $referrer = parse_url($_SERVER['HTTP_REFERER']);
+            //don't act on pages being customized (wp-admin/customize.php)
+            if (isset($referrer['path']) && ($referrer['path'] === $admin['path'] . 'customize.php' || $referrer['path'] === $admin['path'] . 'post.php')) {
+                return false;
+            } elseif ($this->doingAjax && $admin['host'] == $referrer['host'] && strpos($referrer['path'], $admin['path']) === 0) {
+                return false;
+            }
+        }
+        $referrerPath = (isset($referrer['path']) ? $referrer['path'] : '');
+        return !(
+            is_feed()
+             || (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)
+             || (defined('DOING_CRON') && DOING_CRON)
+             || (defined('WP_CLI') && WP_CLI)
+             || (isset($_GET['PageSpeed']) && $_GET['PageSpeed'] == 'off') || strpos($referrerPath, 'PageSpeed=off')
+             ||  isset($_GET['fl_builder']) || strpos($referrerPath, '/?fl_builder') //sssh.... Beaver Builder is editing :)
+             || (isset($_GET['tve']) && $_GET['tve'] == 'true') //Thrive Architect editor (thrive-visual-editor/thrive-visual-editor.php)
+             || (isset($_GET['ct_builder']) && $_GET['ct_builder'] == 'true' && isset($_GET['oxygen_iframe']) && $_GET['oxygen_iframe'] == 'true') //Oxygen Builder
+             || (isset($_REQUEST['action']) && in_array($_REQUEST['action'], self::$excludedAjaxActions))
+             || (is_admin() && function_exists("is_user_logged_in") && is_user_logged_in()
+                && !$this->doingAjax)
+        );
+    }
+
     public function enqueue_script()
     {
-        if (! empty($this->options['cdn_link'])) {
+        if (!empty($this->options['cdn_link']) && $this->isWelcome()) {
             if (isset($this->options['external_cdn_link'])) {
                 $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
             }
@@ -96,7 +137,9 @@ class Gumlet
 
     public function init_ob()
     {
-        ob_start([$this, 'replace_images_in_content']);
+        if ($this->isWelcome()) {
+            ob_start([$this, 'replace_images_in_content']);
+        }
     }
 
     /**
@@ -287,12 +330,8 @@ class Gumlet
         $excluded_urls = explode("\n", $this->get_option("exclude_images"));
         $excluded_urls = array_map('trim', $excluded_urls);
         // Added null to apply filters wp_get_attachment_url to improve compatibility with https://en-gb.wordpress.org/plugins/amazon-s3-and-cloudfront/ - does not break wordpress if the plugin isn't present.
-        $amp_endpoint = false;
-        if (function_exists('is_amp_endpoint')) {
-            $amp_endpoint = is_amp_endpoint();
-        }
 
-        if (! empty($this->options['cdn_link']) && !is_admin() && !$amp_endpoint && !isset($_GET['ct_builder']) && $_SERVER['REQUEST_METHOD'] != 'POST') {
+        if (! empty($this->options['cdn_link'])) {
             $gumlet_host = parse_url($this->options['cdn_link'], PHP_URL_HOST);
             if (isset($this->options['external_cdn_link'])) {
                 $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
@@ -313,12 +352,12 @@ class Gumlet
                         $src = $imageTag->getAttribute('data-src');
                     }
 
-                    if(in_array($src, $excluded_urls)) {
-                      // don't process excluded URLs
-                      $imageTag->setAttribute("data-gumlet", 'false');
-                      $new_img_tag = $doc->saveHTML($imageTag);
-                      $content = str_replace($img_tag, $new_img_tag, $content);
-                      continue;
+                    if (in_array($src, $excluded_urls)) {
+                        // don't process excluded URLs
+                        $imageTag->setAttribute("data-gumlet", 'false');
+                        $new_img_tag = $doc->saveHTML($imageTag);
+                        $content = str_replace($img_tag, $new_img_tag, $content);
+                        continue;
                     }
 
                     if (strpos($src, ';base64,') !== false) {
@@ -326,9 +365,9 @@ class Gumlet
                         continue;
                     }
 
-                    if(strpos(stripcslashes($src), '"') !== false) {
-                      // this URL is actually part of JSON data. It has quotes in it. We will ignore this URL
-                      continue;
+                    if (strpos(stripcslashes($src), '"') !== false) {
+                        // this URL is actually part of JSON data. It has quotes in it. We will ignore this URL
+                        continue;
                     }
 
                     preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $src, $size_matches);
@@ -345,12 +384,28 @@ class Gumlet
                         $imageTag->removeAttribute("data-lazy-srcset");
                         $imageTag->removeAttribute("data-lazy-src");
                         // check if this is magento product image and if it is, set data-src as well
-                        if(strpos($imageTag->getAttribute("class"), "wp-post-image") !== false && $imageTag->getAttribute("data-large_image") != '' && $imageTag->getAttribute("data-large_image_width") != ''){
-                          $imageTag->setAttribute("data-src", $src);
+                        if (strpos($imageTag->getAttribute("class"), "wp-post-image") !== false && $imageTag->getAttribute("data-large_image") != '' && $imageTag->getAttribute("data-large_image_width") != '') {
+                            $imageTag->setAttribute("data-src", $src);
                         }
                         $new_img_tag = $doc->saveHTML($imageTag);
                         $content = str_replace($unconverted_img_tag, $new_img_tag, $content);
                     }
+                }
+            }
+
+            // now we will replace srcset in SOURCE tags to data-srcset.
+            if (preg_match_all('/<source\s[^>]*srcset=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches)) {
+                foreach ($matches[0] as $unconverted_source_tag) {
+                    $doc = new DOMDocument();
+                    // convert image tag to UTF-8 encoding.
+                    $source_tag = mb_convert_encoding($unconverted_source_tag, 'HTML-ENTITIES', "UTF-8");
+                    @$doc->loadHTML($source_tag);
+                    $sourceTag = $doc->getElementsByTagName('source')[0];
+                    $src = $sourceTag->getAttribute('srcset');
+                    $sourceTag->removeAttribute("srcset");
+                    $sourceTag->setAttribute("data-srcset", $src);
+                    $new_source_tag = $doc->saveHTML($sourceTag);
+                    $content = str_replace($unconverted_source_tag, $new_source_tag, $content);
                 }
             }
 
@@ -373,9 +428,9 @@ class Gumlet
                         continue;
                     }
                     if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($bg[4], PHP_URL_HOST) == $gumlet_host) {
-                        if(in_array($bg['image'], $excluded_urls)) {
-                          // don't process excluded URLs
-                          continue;
+                        if (in_array($bg['image'], $excluded_urls)) {
+                            // don't process excluded URLs
+                            continue;
                         }
                         preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $bg['image'], $size_matches);
                         if ($size_matches[0] && strlen($size_matches[0][0]) > 4  && $this->get_option("original_images")) {
@@ -401,9 +456,9 @@ class Gumlet
                         continue;
                     }
 
-                    if(in_array($original_bg, $excluded_urls)) {
-                      // don't process excluded URLs
-                      continue;
+                    if (in_array($original_bg, $excluded_urls)) {
+                        // don't process excluded URLs
+                        continue;
                     }
 
                     if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host) {
