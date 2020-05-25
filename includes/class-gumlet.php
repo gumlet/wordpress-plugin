@@ -26,6 +26,17 @@ class Gumlet
 
     private $doingAjax = false;
 
+    public static $excludedAjaxActions = array(
+        //Add Media popup     Image to editor              Woo product variations
+        'query-attachments', 'send-attachment-to-editor', 'woocommerce_load_variations',
+        //avia layout builder AJAX calls
+        'avia_ajax_text_to_interface', 'avia_ajax_text_to_preview',
+        //My Listing theme
+        'mylisting_upload_file',
+        //Oxygen stuff
+        'ct_get_components_tree', 'ct_exec_code'
+    );
+
     /**
      * Gumlet constructor.
      */
