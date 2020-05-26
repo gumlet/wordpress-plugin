@@ -5,9 +5,9 @@ Tags: images, image management, image manipulation, image optimization, image co
 Author: Gumlet
 Author URI: https://www.gumlet.com
 Requires at least: 3.3
-Requires PHP: 5.6.0
+Requires PHP: 5.6.3
 Tested up to: 5.4
-Stable tag: 1.1.25
+Stable tag: 1.1.26
 License: BSD-2
 License URI: http://opensource.org/licenses/BSD-2-Clause
 
@@ -137,36 +137,5 @@ If you need any help, you can reach out to us at support@gumlet.com.
 
 == Changelog ==
 
-= 1.1.25 =
-* Fix AJAX bug introduced in 1.1.24
-
-= 1.1.24 =
-* Brizy and Beaver builder issues are resolved.
-* Plugin now plays better with <picture> and <source> tags.
-
-= 1.1.23 =
-* Minor fixes to improve performance
-
-= 1.1.22 =
-* Bug fix in applying "Use <img> width" config.
-
-= 1.1.21 =
-* Fixes WooCommerce gallery image zoom.
-
-= 1.1.20 =
-* Bug fix: Settings are not wiped out on plugin disable and update.
-* Feature: Added option to take image width either from <img> width attribute or calculate on-the-fly.
-
-= 1.1.17 =
-Bug fix for image URLs with non-english characters.
-
-= 1.1.14 =
-Fixes some minor issues while displaying images.
-
-= 1.1.12
-* Added option to use original or processed images
-* Bug fixes for default options
-* Removed option for auto-webp. The setting can be changed for a source from Gumlet panel
-
-= 1.1.11
-* Improved compatibility with some lazy-load plugins.
+= 1.1.26 =
+* WooCommerce gallery display fix.
