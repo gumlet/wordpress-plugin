@@ -29,33 +29,3 @@ Getting Started
 4. Return to the "Plugins" page and ensure the "gumlet plugin" is activated. Once activated, click the "settings" link and populate the "Gumlet Host" field (e.g., `https://yourcompany.gumlet.com`). This is the full host of the gumlet source you created in step #1. Optionally, you can also turn on `Auto Format` or `Auto Compress`. Finally, click "Save Options" when you're done.
 
 5. Go to a post on your WordPress blog and ensure your images are now serving through gumlet.
-
-Testing
--------
-
-This plugin uses phpunit to run its tests. You will need to set up a local test database to run these tests. You can do that using the bootstrap script:
-
-```
-$ bin/install-wp-tests.sh gumlet_wordpress_tests <YOUR MYSQL USERNAME> <YOUR MYSQL PASSWORD>
-```
-
-Then running the tests is as simple as:
-
-```
-$ phpunit
-```
-
-Testing with Docker
--------
-
-This plugin uses phpunit to run its tests. You can use Docker if you don't want to set up the test database locally.
-
-Start the database:
-```
-$ docker-compose up -d mysql
-```
-
-Then running the tests is as simple as:
-```
-$ docker-compose up phpunit
-```

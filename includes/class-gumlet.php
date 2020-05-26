@@ -133,7 +133,7 @@ class Gumlet
                 $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
             }
 
-            wp_register_script('gumlet-script-async', 'https://cdn.gumlet.com/gumlet.js/2.0/gumlet.min.js', array(), '2.0', false);
+            wp_register_script('gumlet-script-async', 'https://cdn.gumlet.com/gumlet.js/2.0/gumlet.min.js', array(), '2.0.2', false);
             wp_localize_script('gumlet-script-async', 'gumlet_wp_config', array(
               'gumlet_host' => parse_url($this->options['cdn_link'], PHP_URL_HOST),
               'current_host' => isset($external_cdn_host) ? $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST),
@@ -329,6 +329,37 @@ class Gumlet
         return $sources;
     }
 
+    public function replace_wc_gallery_thumbs($matches) {
+      $url = $this->absoluteUrl($matches[1]);
+      $str = str_replace($matches[1], plugins_url('assets/images/pixel.png', __DIR__) . "#gumleturl=" . $url , $matches[0]);
+      return $str;
+    }
+
+    static function absoluteUrl($url, $cssPath = false) {
+        $url = trim($url);
+        $URI = parse_url($url);
+        if(isset($URI['host']) && strlen($URI['host'])) {
+            if(!isset($URI['scheme']) || !strlen($URI['scheme'])) {
+                $url = (is_ssl() ? 'https' : 'http') . '://' . ltrim($url, '/');
+            }
+            return $url;
+        } elseif(substr($url, 0, 1) === '/') {
+            return home_url() . $url;
+        } else {
+            if($cssPath) {
+                $homePath = self::get_home_path();
+                if(strpos($cssPath, $homePath) !== false) {
+                    $url = self::normalizePath($cssPath . $url);
+                    return str_replace( $homePath, trailingslashit(get_home_url()), $url);
+                }
+                return $url;
+            } else {
+                global $wp;
+                return trailingslashit(home_url($wp->request)) . $url;
+            }
+        }
+    }
+
     /**
      * Modify image urls in content to use gumlet host.
      *
@@ -363,6 +394,10 @@ class Gumlet
                         $src = $imageTag->getAttribute('data-src');
                     }
 
+                    if (!$src) {
+                        $src = $imageTag->getAttribute('data-large_image');
+                    }
+
                     if (in_array($src, $excluded_urls)) {
                         // don't process excluded URLs
                         $imageTag->setAttribute("data-gumlet", 'false');
@@ -392,6 +427,7 @@ class Gumlet
                         $imageTag->removeAttribute("srcset");
                         $imageTag->removeAttribute("data-src");
                         $imageTag->removeAttribute("data-srcset");
+                        $imageTag->removeAttribute("data-large_image");
                         $imageTag->removeAttribute("data-lazy-srcset");
                         $imageTag->removeAttribute("data-lazy-src");
                         // check if this is magento product image and if it is, set data-src as well
@@ -419,6 +455,13 @@ class Gumlet
                     $content = str_replace($unconverted_source_tag, $new_source_tag, $content);
                 }
             }
+
+            // replace wordpress thumbnails
+            $content = preg_replace_callback(
+                '/\<div[^\<\>]*?\sdata-thumb(?:nail|)\=(?:\"|\')(.+?)(?:\"|\')(?:.+?)\>/s',
+                array($this, 'replace_wc_gallery_thumbs'),
+                $content
+            );
 
             // We don't want links to be processed by Gumlet
 
