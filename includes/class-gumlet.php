@@ -118,6 +118,7 @@ class Gumlet
              || (defined('WP_CLI') && WP_CLI)
              || (isset($_GET['PageSpeed']) && $_GET['PageSpeed'] == 'off') || strpos($referrerPath, 'PageSpeed=off')
              ||  isset($_GET['fl_builder']) || strpos($referrerPath, '/?fl_builder') //sssh.... Beaver Builder is editing :)
+             ||  isset($_GET['brizy-edit']) || strpos($referrerPath, '/?brizy-edit') //sssh.... Brizy Builder is editing :)
              || (isset($_GET['tve']) && $_GET['tve'] == 'true') //Thrive Architect editor (thrive-visual-editor/thrive-visual-editor.php)
              || (isset($_GET['ct_builder']) && $_GET['ct_builder'] == 'true' && isset($_GET['oxygen_iframe']) && $_GET['oxygen_iframe'] == 'true') //Oxygen Builder
              || (isset($_REQUEST['action']) && in_array($_REQUEST['action'], self::$excludedAjaxActions))
