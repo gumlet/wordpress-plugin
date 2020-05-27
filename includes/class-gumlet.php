@@ -91,12 +91,8 @@ class Gumlet
 
     protected function isWelcome()
     {
-        $amp_endpoint = false;
-        if (function_exists('is_amp_endpoint')) {
-            $amp_endpoint = is_amp_endpoint();
-        }
-
-        if ($amp_endpoint) {
+        // disable for AMP pages
+        if (function_exists('is_amp_endpoint') && is_amp_endpoint()) {
             return false;
         }
 
@@ -120,7 +116,8 @@ class Gumlet
              ||  isset($_GET['fl_builder']) || strpos($referrerPath, '/?fl_builder') //sssh.... Beaver Builder is editing :)
              ||  isset($_GET['brizy-edit']) || strpos($referrerPath, '/?brizy-edit') //sssh.... Brizy Builder is editing :)
              || (isset($_GET['tve']) && $_GET['tve'] == 'true') //Thrive Architect editor (thrive-visual-editor/thrive-visual-editor.php)
-             || (isset($_GET['ct_builder']) && $_GET['ct_builder'] == 'true' && isset($_GET['oxygen_iframe']) && $_GET['oxygen_iframe'] == 'true') //Oxygen Builder
+             || (isset($_GET['ct_builder']) && $_GET['ct_builder'] == 'true') //Oxygen Builder
+             || isset($_GET['gumlet_disable']) // able to disable for debug
              || (isset($_REQUEST['action']) && in_array($_REQUEST['action'], self::$excludedAjaxActions))
              || (is_admin() && function_exists("is_user_logged_in") && is_user_logged_in()
                 && !$this->doingAjax)
