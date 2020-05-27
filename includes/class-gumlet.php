@@ -117,10 +117,10 @@ class Gumlet
              ||  isset($_GET['brizy-edit']) || strpos($referrerPath, '/?brizy-edit') //sssh.... Brizy Builder is editing :)
              || (isset($_GET['tve']) && $_GET['tve'] == 'true') //Thrive Architect editor (thrive-visual-editor/thrive-visual-editor.php)
              || (isset($_GET['ct_builder']) && $_GET['ct_builder'] == 'true') //Oxygen Builder
+             || (isset($_GET['action']) && $_GET['action'] == 'ct_render_shortcode') // oxygen templates
              || isset($_GET['gumlet_disable']) // able to disable for debug
              || (isset($_REQUEST['action']) && in_array($_REQUEST['action'], self::$excludedAjaxActions))
-             || (is_admin() && function_exists("is_user_logged_in") && is_user_logged_in()
-                && !$this->doingAjax)
+             || (is_admin() && function_exists("is_user_logged_in") && is_user_logged_in() && !$this->doingAjax)
         );
     }
 
