@@ -430,7 +430,7 @@ class Gumlet
                         $imageTag->removeAttribute("data-lazy-srcset");
                         $imageTag->removeAttribute("data-lazy-src");
                         // check if this is magento product image and if it is, set data-src as well
-                        if (strpos($imageTag->getAttribute("class"), "wp-post-image") !== false && $imageTag->getAttribute("data-large_image") != '' && $imageTag->getAttribute("data-large_image_width") != '') {
+                        if (strpos($imageTag->getAttribute("class"), "wp-post-image") !== false  && $imageTag->getAttribute("data-large_image_width") != '') {
                             $imageTag->setAttribute("data-src", $src);
                         }
                         $new_img_tag = $doc->saveHTML($imageTag);
