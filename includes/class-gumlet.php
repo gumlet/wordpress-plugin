@@ -380,6 +380,18 @@ class Gumlet
 
             $going_to_be_replaced_host = isset($external_cdn_host) ?  $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST);
 
+
+            // this is bad hack for working with S3 hosts without region name in-built. unhack it later
+            $is_s3_host = false;
+
+            if (strpos($going_to_be_replaced_host, 'amazonaws.com') !== false) {
+              $s3_host_array = explode(".", $going_to_be_replaced_host);
+              if(count($s3_host_array) == 5) {
+                // this is an s3 host with region name in-built
+                $is_s3_host = true;
+              }
+            }
+
             // replaces src with data-gmsrc and removes srcset from images
             if (preg_match_all('/<img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches)) {
                 foreach ($matches[0] as $unconverted_img_tag) {
@@ -418,6 +430,20 @@ class Gumlet
                     preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $src, $size_matches);
                     if ($size_matches[0] && strlen($size_matches[0][0]) > 4 && $this->get_option("original_images")) {
                         $src = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $src);
+                    }
+
+                    $current_host = parse_url($src, PHP_URL_HOST);
+
+                    // S3 host without region is detected here and replaced with host with region.
+                    // this is a bad hack. unhack it.
+                    if(strpos($current_host, "amazonaws.com") !== false){
+                      $current_host_array = explode(".", $current_host);
+                      if(count($current_host_array) == 4 && $is_s3_host) {
+                        // this current host is S3 URL without region in it. put actual host with region into it.
+                        $parsed_url = parse_url($src);
+                        $parsed_url['host'] = $going_to_be_replaced_host;
+                        $src = $this->unparse_url($parsed_url);
+                      }
                     }
 
                     if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host || !parse_url($src, PHP_URL_HOST)) {
