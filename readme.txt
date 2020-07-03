@@ -137,6 +137,9 @@ If you need any help, you can reach out to us at support@gumlet.com.
 
 == Changelog ==
 
+= 1.1.35 =
+* Bug fix for RSS feeds.
+
 = 1.1.34 =
 * Bug fix in exclude URLs.
 
