@@ -413,7 +413,7 @@ class Gumlet
                         // don't process excluded URLs
                         $imageTag->setAttribute("data-gumlet", 'false');
                         $new_img_tag = $doc->saveHTML($imageTag);
-                        $content = str_replace($img_tag, $new_img_tag, $content);
+                        $content = str_replace($unconverted_img_tag, $new_img_tag, $content);
                         continue;
                     }
 
