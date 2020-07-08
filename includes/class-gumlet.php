@@ -418,7 +418,7 @@ class Gumlet
                         continue;
                     }
 
-                    if (strpos($src, ';base64,') !== false) {
+                    if (strpos($src, ';base64,') !== false || strpos($src, 'data:image/svg+xml') !== false) {
                         // does not process data URL.
                         continue;
                     }
@@ -503,7 +503,7 @@ class Gumlet
             if (!empty($matches)) {
                 foreach ($matches[0] as $match) {
                     preg_match('~\bbackground(-image)?\s*:(.*?)url\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $match, $bg);
-                    if (strpos($bg['image'], ';base64,') !== false) {
+                    if (strpos($bg['image'], ';base64,') !== false || strpos($bg['image'], 'data:image/svg+xml') !== false) {
                         // does not process data URL.
                         continue;
                     }
@@ -531,7 +531,7 @@ class Gumlet
                 foreach ($matches[0] as $match) {
                     preg_match('~\bbackground(-image)?\s*:(.*?)url\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $match, $bg);
                     $original_bg = $bg['image'];
-                    if (strpos($bg['image'], ';base64,') !== false) {
+                    if (strpos($bg['image'], ';base64,') !== false || strpos($bg['image'], 'data:image/svg+xml') !== false) {
                         // does not process data URL.
                         continue;
                     }
