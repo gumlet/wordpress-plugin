@@ -109,7 +109,7 @@ class Gumlet
         $referrerPath = (isset($referrer['path']) ? $referrer['path'] : '');
         return !(
             is_feed()
-             || endsWith($_SERVER['REQUEST_URI'], "/feed/")
+             || strpos($_SERVER['REQUEST_URI'], "/feed/") != false
              || (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)
              || (defined('DOING_CRON') && DOING_CRON)
              || (defined('WP_CLI') && WP_CLI)
@@ -369,10 +369,6 @@ class Gumlet
      */
     public function replace_images_in_content($content)
     {
-        if(!$this->isWelcome()) {
-          return $content;
-        }
-        
         $excluded_urls = explode("\n", $this->get_option("exclude_images"));
         $excluded_urls = array_map('trim', $excluded_urls);
         // Added null to apply filters wp_get_attachment_url to improve compatibility with https://en-gb.wordpress.org/plugins/amazon-s3-and-cloudfront/ - does not break wordpress if the plugin isn't present.
@@ -644,14 +640,6 @@ class Gumlet
         $fragment = isset($parsed_url['fragment']) ? '#' . $parsed_url['fragment'] : '';
         return "$scheme$user$pass$host$port$path$query$fragment";
     }
-}
-
-function endsWith( $haystack, $needle ) {
-    $length = strlen( $needle );
-    if( !$length ) {
-        return true;
-    }
-    return substr( $haystack, -$length ) === $needle;
 }
 
 Gumlet::instance();
