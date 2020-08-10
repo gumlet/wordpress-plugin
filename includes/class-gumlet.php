@@ -109,7 +109,7 @@ class Gumlet
         $referrerPath = (isset($referrer['path']) ? $referrer['path'] : '');
         return !(
             is_feed()
-             || strpos($_SERVER['REQUEST_URI'], "/feed/") != false
+             || strpos($_SERVER['REQUEST_URI'], "/feed/") !== false
              || (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)
              || (defined('DOING_CRON') && DOING_CRON)
              || (defined('WP_CLI') && WP_CLI)
