@@ -277,20 +277,21 @@ class Gumlet
 
     public function replace_wc_gallery_thumbs($matches) {
       $doc = new DOMDocument();
-      $img_tag = mb_convert_encoding($matches[0], 'HTML-ENTITIES', "UTF-8");
-      @$doc->loadHTML($img_tag);
-      $imageTag = $doc->getElementsByTagName('div')[0];
+      @$doc->loadHTML(mb_convert_encoding($matches[0], 'HTML-ENTITIES', "UTF-8"));
+      $divTag = $doc->getElementsByTagName('div')[0];
 
-      if(strpos($imageTag->getAttribute("class"), "elementor-gallery-item__image") !== false) {
+      if($divTag && strpos($divTag->getAttribute("class"), "elementor-gallery-item__image") !== false) {
         // this is elementor gallery.. need to put image in background
-        $url = $imageTag->getAttribute('data-thumbnail');
-        $imageTag-> setAttribute("data-bg", $this->replace_image_url($url));
-        $imageTag->removeAttribute("data-thumbnail");
+        return $matches[0];
+        $url = $divTag->getAttribute('data-thumbnail');
+        $divTag-> setAttribute("data-bg", $this->replace_image_url($url));
+        // $divTag->removeAttribute("data-thumbnail");
 
-        return $doc->saveHTML($imageTag);
+        return $doc->saveHTML($divTag);
       } else {
         // this seems like other thumbnail
         $url = $this->absoluteUrl($matches[1]);
+        // $str = str_replace($matches[1], $this->replace_image_url($url) , $matches[0]);
         $str = str_replace($matches[1], plugins_url('assets/images/pixel.png', __DIR__) . "#gumleturl=" . $url , $matches[0]);
         return $str;
       }
