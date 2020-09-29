@@ -247,60 +247,6 @@ class Gumlet
     }
 
     /**
-     * Set params when running image_downsize
-     *
-     * @param false|array  $return
-     * @param int          $attachment_id
-     * @param string|array $size
-     *
-     * @return false|array
-     */
-    public function image_downsize($return, $attachment_id, $size)
-    {
-        if (! empty($this->options['cdn_link'])) {
-            $img_url = wp_get_attachment_url($attachment_id);
-
-            $params = [];
-            if (is_array($size)) {
-                $params['w'] = $width = isset($size[0]) ? $size[0] : 0;
-                $params['h'] = $height = isset($size[1]) ? $size[1] : 0;
-            } else {
-                $available_sizes = $this->get_all_defined_sizes();
-                if (isset($available_sizes[ $size ])) {
-                    $size        = $available_sizes[ $size ];
-                    $params['w'] = $width = $size['width'];
-                    $params['h'] = $height = $size['height'];
-                }
-            }
-
-            $params = array_filter($params);
-
-            $img_url = add_query_arg($params, $img_url);
-
-            if (! isset($width) || ! isset($height)) {
-                // any other type: use the real image
-                $meta   = wp_get_attachment_metadata($attachment_id);
-
-                // Image sizes is missing for pdf thumbnails
-                if ($meta) {
-                    $meta['width']  = isset($meta['width']) ? $meta['width'] : 0;
-                    $meta['height'] = isset($meta['height']) ? $meta['height'] : 0;
-                } else {
-                    $meta = array("width" => 0, "height" => 0);
-                }
-
-
-                $width  = isset($width) ? $width : $meta['width'];
-                $height = isset($height) ? $height : $meta['height'];
-            }
-
-            $return = [ $img_url, $width, $height, true ];
-        }
-
-        return $return;
-    }
-
-    /**
      * Change url for images in srcset
      *
      * @param array  $sources
@@ -330,9 +276,25 @@ class Gumlet
     }
 
     public function replace_wc_gallery_thumbs($matches) {
-      $url = $this->absoluteUrl($matches[1]);
-      $str = str_replace($matches[1], plugins_url('assets/images/pixel.png', __DIR__) . "#gumleturl=" . $url , $matches[0]);
-      return $str;
+      $doc = new DOMDocument();
+      $img_tag = mb_convert_encoding($matches[0], 'HTML-ENTITIES', "UTF-8");
+      @$doc->loadHTML($img_tag);
+      $imageTag = $doc->getElementsByTagName('div')[0];
+
+      if(strpos($imageTag->getAttribute("class"), "elementor-gallery-item__image") !== false) {
+        // this is elementor gallery.. need to put image in background
+        $url = $imageTag->getAttribute('data-thumbnail');
+        $imageTag-> setAttribute("data-bg", $this->replace_image_url($url));
+        $imageTag->removeAttribute("data-thumbnail");
+
+        return $doc->saveHTML($imageTag);
+      } else {
+        // this seems like other thumbnail
+        $url = $this->absoluteUrl($matches[1]);
+        $str = str_replace($matches[1], plugins_url('assets/images/pixel.png', __DIR__) . "#gumleturl=" . $url , $matches[0]);
+        return $str;
+      }
+
     }
 
     static function absoluteUrl($url, $cssPath = false) {
@@ -598,34 +560,6 @@ class Gumlet
         return $params;
     }
 
-    /**
-     * Get all defined image sizes
-     *
-     * @return array
-     */
-    protected function get_all_defined_sizes()
-    {
-        // Make thumbnails and other intermediate sizes.
-        $theme_image_sizes = wp_get_additional_image_sizes();
-
-        $sizes = [];
-        foreach (get_intermediate_image_sizes() as $s) {
-            $sizes[ $s ] = [ 'width' => '', 'height' => '', 'crop' => false ];
-            if (isset($theme_image_sizes[ $s ])) {
-                // For theme-added sizes
-                $sizes[ $s ]['width']  = intval($theme_image_sizes[ $s ]['width']);
-                $sizes[ $s ]['height'] = intval($theme_image_sizes[ $s ]['height']);
-                $sizes[ $s ]['crop']   = $theme_image_sizes[ $s ]['crop'];
-            } else {
-                // For default sizes set in options
-                $sizes[ $s ]['width']  = get_option("{$s}_size_w");
-                $sizes[ $s ]['height'] = get_option("{$s}_size_h");
-                $sizes[ $s ]['crop']   = get_option("{$s}_crop");
-            }
-        }
-
-        return $sizes;
-    }
 
     protected function unparse_url($parsed_url)
     {
