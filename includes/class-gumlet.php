@@ -283,11 +283,11 @@ class Gumlet
       if($divTag && strpos($divTag->getAttribute("class"), "elementor-gallery-item__image") !== false) {
         // this is elementor gallery.. need to put image in background
         return $matches[0];
-        $url = $divTag->getAttribute('data-thumbnail');
-        $divTag-> setAttribute("data-bg", $this->replace_image_url($url));
-        // $divTag->removeAttribute("data-thumbnail");
-
-        return $doc->saveHTML($divTag);
+        // $url = $divTag->getAttribute('data-thumbnail');
+        // $divTag-> setAttribute("data-bg", $this->replace_image_url($url));
+        // // $divTag->removeAttribute("data-thumbnail");
+        //
+        // return $doc->saveHTML($divTag);
       } else {
         // this seems like other thumbnail
         $url = $this->absoluteUrl($matches[1]);
