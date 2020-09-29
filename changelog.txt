@@ -1,5 +1,23 @@
 == Changelog ==
 
+= 1.1.41 =
+* Elementor gallery fix.
+
+= 1.1.40 =
+* Fix for RSS feed.
+
+= 1.1.39 =
+* Fix for RSS feed.
+
+= 1.1.38 =
+* Gumlet does not unnecessarily replace image URLs
+
+= 1.1.37 =
+* Bug fix for rss feeds.
+
+= 1.1.36 =
+* Bug fix for background images.
+
 = 1.1.35 =
 * Bug fix for RSS feeds.
 

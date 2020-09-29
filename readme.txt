@@ -7,7 +7,7 @@ Author URI: https://www.gumlet.com
 Requires at least: 3.3
 Requires PHP: 5.6.3
 Tested up to: 5.5
-Stable tag: 1.1.43
+Stable tag: 1.1.44
 License: BSD-2
 License URI: http://opensource.org/licenses/BSD-2-Clause
 
@@ -137,23 +137,8 @@ If you need any help, you can reach out to us at support@gumlet.com.
 
 == Changelog ==
 
+= 1.1.44 =
+* Woocommerce lightbox fix.
+
 = 1.1.43 =
 * Wordpress thumbnail fix.
-
-= 1.1.41 =
-* Elementor gallery fix.
-
-= 1.1.40 =
-* Fix for RSS feed.
-
-= 1.1.39 =
-* Fix for RSS feed.
-
-= 1.1.38 =
-* Gumlet does not unnecessarily replace image URLs
-
-= 1.1.37 =
-* Bug fix for rss feeds.
-
-= 1.1.36 =
-* Bug fix for background images.

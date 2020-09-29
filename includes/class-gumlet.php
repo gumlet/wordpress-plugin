@@ -400,7 +400,6 @@ class Gumlet
                         $imageTag->removeAttribute("srcset");
                         $imageTag->removeAttribute("data-src");
                         $imageTag->removeAttribute("data-srcset");
-                        $imageTag->removeAttribute("data-large_image");
                         $imageTag->removeAttribute("data-lazy-srcset");
                         $imageTag->removeAttribute("data-lazy-src");
                         // check if this is magento product image and if it is, set data-src as well
