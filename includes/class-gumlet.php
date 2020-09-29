@@ -276,26 +276,10 @@ class Gumlet
     }
 
     public function replace_wc_gallery_thumbs($matches) {
-      $doc = new DOMDocument();
-      @$doc->loadHTML(mb_convert_encoding($matches[0], 'HTML-ENTITIES', "UTF-8"));
-      $divTag = $doc->getElementsByTagName('div')[0];
-
-      if($divTag && strpos($divTag->getAttribute("class"), "elementor-gallery-item__image") !== false) {
-        // this is elementor gallery.. need to put image in background
-        return $matches[0];
-        // $url = $divTag->getAttribute('data-thumbnail');
-        // $divTag-> setAttribute("data-bg", $this->replace_image_url($url));
-        // // $divTag->removeAttribute("data-thumbnail");
-        //
-        // return $doc->saveHTML($divTag);
-      } else {
-        // this seems like other thumbnail
-        $url = $this->absoluteUrl($matches[1]);
-        // $str = str_replace($matches[1], $this->replace_image_url($url) , $matches[0]);
-        $str = str_replace($matches[1], plugins_url('assets/images/pixel.png', __DIR__) . "#gumleturl=" . $url , $matches[0]);
-        return $str;
-      }
-
+      $url = $this->absoluteUrl($matches[1]);
+      $str = str_replace($matches[1], $this->replace_image_url($url) , $matches[0]);
+      // $str = str_replace($matches[1], plugins_url('assets/images/pixel.png', __DIR__) . "#gumleturl=" . $url , $matches[0]);
+      return $str;
     }
 
     static function absoluteUrl($url, $cssPath = false) {
