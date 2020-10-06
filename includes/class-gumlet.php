@@ -27,6 +27,42 @@ class Gumlet
     private $doingAjax = false;
 
     public static $excludedAjaxActions = array(
+        // useyourdrive plugin exclude
+        'useyourdrive-get-filelist',
+        // wpdiscuz
+        "wpdLoadMoreComments",
+        "wpdVoteOnComment",
+        "wpdSorting",
+        "wpdAddComment",
+        "wpdGetSingleComment",
+        "wpdCheckNotificationType",
+        "wpdRedirect",
+        "wpdEditComment",
+        "wpdSaveEditedComment",
+        "wpdUpdateAutomatically",
+        "wpdReadMore",
+        "wpdShowReplies",
+        "wpdMostReactedComment",
+        "wpdHottestThread",
+        "wpdGetInfo",
+        "wpdGetActivityPage",
+        "wpdGetSubscriptionsPage",
+        "wpdGetFollowsPage",
+        "wpdDeleteComment",
+        "wpdCancelSubscription",
+        "wpdCancelFollow",
+        "wpdEmailDeleteLinks",
+        "wpdGuestAction",
+        "wpdStickComment",
+        "wpdCloseThread",
+        "wpdFollowUser",
+        "wpdBubbleUpdate",
+        "wpdAddInlineComment",
+        "wpdGetLastInlineComments",
+        "wpdGetInlineCommentForm",
+        "wpdAddSubscription",
+        "wpdUnsubscribe",
+        "wpdUserRate",
         //Add Media popup     Image to editor              Woo product variations
         'query-attachments', 'send-attachment-to-editor', 'woocommerce_load_variations',
         //avia layout builder AJAX calls
