@@ -20,7 +20,7 @@ class GumletLogger {
 
     private function __construct() {
         $upload_dir = wp_upload_dir();
-        $this->logPath = $upload_dir['basedir'] . '/gumlet_logs';
+        $this->logPath = $upload_dir['basedir'] . '/gumlet_logs.log';
         if (GUMLET_DEBUG === 'delete') {
             @unlink($this->logPath);
             $this->log("START FRESH", GUMLET_DEBUG);

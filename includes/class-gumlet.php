@@ -352,6 +352,8 @@ class Gumlet
      */
     public function replace_images_in_content($content)
     {
+        $this->logger->log("Inside replace_images");
+        $this->logger->log("Processing content:". $content);
         $excluded_urls = explode("\n", $this->get_option("exclude_images"));
         $excluded_urls = array_map('trim', $excluded_urls);
         // Added null to apply filters wp_get_attachment_url to improve compatibility with https://en-gb.wordpress.org/plugins/amazon-s3-and-cloudfront/ - does not break wordpress if the plugin isn't present.
@@ -379,6 +381,7 @@ class Gumlet
             // replaces src with data-gmsrc and removes srcset from images
             if (preg_match_all('/<img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches)) {
                 foreach ($matches[0] as $unconverted_img_tag) {
+                    $this->logger->log("Processing img:", $unconverted_img_tag);
                     $doc = new DOMDocument();
                     // convert image tag to UTF-8 encoding.
                     $img_tag = mb_convert_encoding($unconverted_img_tag, 'HTML-ENTITIES', "UTF-8");
