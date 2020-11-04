@@ -353,7 +353,7 @@ class Gumlet
     public function replace_images_in_content($content)
     {
         $this->logger->log("Inside replace_images");
-        $this->logger->log("Processing content:". $content);
+
         $excluded_urls = explode("\n", $this->get_option("exclude_images"));
         $excluded_urls = array_map('trim', $excluded_urls);
         // Added null to apply filters wp_get_attachment_url to improve compatibility with https://en-gb.wordpress.org/plugins/amazon-s3-and-cloudfront/ - does not break wordpress if the plugin isn't present.
@@ -377,9 +377,10 @@ class Gumlet
                 $is_s3_host = true;
               }
             }
-
+            $this->logger->log("Processing content:". $content);
             // replaces src with data-gmsrc and removes srcset from images
-            if (preg_match_all('/<img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches)) {
+            if (preg_match_all('/<img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches, PREG_PATTERN_ORDER)) {
+                $this->logger->log("Matched regex:", $matches);
                 foreach ($matches[0] as $unconverted_img_tag) {
                     $this->logger->log("Processing img:", $unconverted_img_tag);
                     $doc = new DOMDocument();
@@ -401,11 +402,13 @@ class Gumlet
                         $imageTag->setAttribute("data-gumlet", 'false');
                         $new_img_tag = $doc->saveHTML($imageTag);
                         $content = str_replace($unconverted_img_tag, $new_img_tag, $content);
+                        $this->logger->log("Skipping due to excluded URL");
                         continue;
                     }
 
                     if (strpos($src, ';base64,') !== false || strpos($src, 'data:image/svg+xml') !== false) {
                         // does not process data URL.
+                        $this->logger->log("Skipping due to data URL");
                         continue;
                     }
 
@@ -414,7 +417,7 @@ class Gumlet
                         continue;
                     }
 
-                    preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $src, $size_matches);
+                    preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $src, $size_matches, PREG_PATTERN_ORDER);
                     if ($size_matches[0] && strlen($size_matches[0][0]) > 4 && $this->get_option("original_images")) {
                         $src = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $src);
                     }
@@ -446,7 +449,10 @@ class Gumlet
                             $imageTag->setAttribute("data-src", $src);
                         }
                         $new_img_tag = $doc->saveHTML($imageTag);
+                        $this->logger->log("New img tag:", $new_img_tag);
                         $content = str_replace($unconverted_img_tag, $new_img_tag, $content);
+                    } else {
+                      $this->logger->log("Skipping due to mismatched host to be replaced.");
                     }
                 }
             }
