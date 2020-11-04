@@ -467,7 +467,11 @@ class Gumlet
                 foreach ($matches[0] as $unconverted_source_tag) {
                     $doc = new DOMDocument();
                     // convert image tag to UTF-8 encoding.
-                    $source_tag = mb_convert_encoding($unconverted_source_tag, 'HTML-ENTITIES', "UTF-8");
+                    if(function_exists("mb_convert_encoding")) {
+                      $source_tag = mb_convert_encoding($unconverted_source_tag, 'HTML-ENTITIES', "UTF-8");
+                    } else {
+                      $source_tag = $unconverted_source_tag;
+                    }
                     @$doc->loadHTML($source_tag);
                     $sourceTag = $doc->getElementsByTagName('source')[0];
                     $src = $sourceTag->getAttribute('srcset');
