@@ -19,7 +19,8 @@
 if (!defined('GUMLET_DEBUG')) {
     define('GUMLET_DEBUG', isset($_GET['GUMLET_DEBUG']) ? $_GET['GUMLET_DEBUG'] : false);
 }
-if (GUMLET_DEBUG & 2) {
+
+if (GUMLET_DEBUG) {
     error_reporting(E_ALL);
     ini_set('display_errors', 1);
 }
