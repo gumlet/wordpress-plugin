@@ -385,7 +385,12 @@ class Gumlet
                     $this->logger->log("Processing img:", $unconverted_img_tag);
                     $doc = new DOMDocument();
                     // convert image tag to UTF-8 encoding.
-                    $img_tag = mb_convert_encoding($unconverted_img_tag, 'HTML-ENTITIES', "UTF-8");
+                    if(function_exists("mb_convert_encoding")) {
+                      $img_tag = mb_convert_encoding($unconverted_img_tag, 'HTML-ENTITIES', "UTF-8");
+                    } else {
+                      $img_tag = $unconverted_img_tag;
+                    }
+
                     @$doc->loadHTML($img_tag);
                     $imageTag = $doc->getElementsByTagName('img')[0];
                     $src = $imageTag->getAttribute('src');
