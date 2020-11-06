@@ -99,7 +99,7 @@ class Gumlet
 
         add_action('wp_enqueue_scripts', [$this, 'enqueue_script'], 1);
 
-        add_action('wp_loaded', [$this, 'init_ob'], 1);
+        add_action('init', [$this, 'init_ob'], 1);
         // add_filter('pum_popup_content', [ $this, 'replace_images_in_content' ], PHP_INT_MAX);
         // add_filter('the_content', [ $this, 'replace_images_in_content' ], PHP_INT_MAX);
         // add_filter('post_thumbnail_html', [ $this, 'replace_images_in_content' ], PHP_INT_MAX );
