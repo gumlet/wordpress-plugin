@@ -176,6 +176,7 @@ class Gumlet
               'lazy_load' => (!empty($this->options['lazy_load'])) ? 1 : 0,
               'width_from_img' => get_option('gumlet_width_from_img') ? 1 : 0,
               'auto_compress' => (!empty($this->options['auto_compress'])) ? 1 : 0,
+              "auto_webp" => 1,
               'quality' => (!empty($this->options['quality'])) ? $this->options['quality'] : 80
             ));
             wp_enqueue_script('gumlet-script-async');

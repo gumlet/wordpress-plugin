@@ -7,7 +7,7 @@ Author URI: https://www.gumlet.com
 Requires at least: 3.3
 Requires PHP: 5.6.3
 Tested up to: 5.5
-Stable tag: 1.1.52
+Stable tag: 1.1.53
 License: BSD-2
 License URI: http://opensource.org/licenses/BSD-2-Clause
 
@@ -136,6 +136,9 @@ Please follow our official installation guide: [https://docs.gumlet.com/platform
 If you need any help, you can reach out to us at support@gumlet.com.
 
 == Changelog ==
+
+= 1.1.53 =
+* Webp detection happens on client-side.
 
 = 1.1.51 =
 * Reverted changes in 1.1.50.
