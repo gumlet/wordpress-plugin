@@ -127,7 +127,8 @@ class Gumlet
 
     protected function isWelcome()
     {
-        // disable for AMP pages
+        // ignoring Google AMP..
+        // ideally we should convert hostnames to gumlet hostname so traffic still comes to us.
         if (function_exists('is_amp_endpoint') && is_amp_endpoint()) {
             return false;
         }
@@ -145,6 +146,9 @@ class Gumlet
         $referrerPath = (isset($referrer['path']) ? $referrer['path'] : '');
         return !(
             is_feed()
+            // ignoring FB instant articles..
+            // ideally we should convert hostnames to gumlet hostname so traffic still comes to us.
+             || (isset( $_GET[ 'ia_markup' ] ) && $_GET[ 'ia_markup' ])
              || strpos($_SERVER['REQUEST_URI'], "/feed/") !== false
              || (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)
              || (defined('DOING_CRON') && DOING_CRON)
