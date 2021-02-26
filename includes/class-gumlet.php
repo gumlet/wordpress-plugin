@@ -129,7 +129,7 @@ class Gumlet
     {
         // ignoring Google AMP..
         // ideally we should convert hostnames to gumlet hostname so traffic still comes to us.
-        if (function_exists('is_amp_endpoint') && is_amp_endpoint()) {
+        if (function_exists('amp_is_request') && amp_is_request()) {
             return false;
         }
 
