@@ -64,11 +64,14 @@ class Gumlet_Options_Page
     				<a href="https://docs.gumlet.com/platform-guides/wordpress-integration" target="_blank">instructions.</a></p>
       </div>
 
-
 			<form method="post" action="<?php echo admin_url('options.php'); ?>">
 
 				<?php settings_fields('gumlet_settings_group'); ?>
-				<table class="form-table">
+  <div class="mytabs">
+    <input type="radio" id="tabsettings" name="mytabs" checked="checked">
+    <label for="tabsettings" class="mytablabel">Settings</label>
+    <div class="tab">
+      <table class="form-table">
 					<tbody>
 						<tr>
 							<th>
@@ -114,9 +117,11 @@ class Gumlet_Options_Page
 						</tr>
 					</tbody>
 				</table>
-        <hr>
-        <h3>* Advanced Settings *</h3>
-        <table class="form-table">
+    </div>
+    <input type="radio" id="tabadvanced" name="mytabs">
+    <label for="tabadvanced" class="mytablabel">Advanced</label>
+    <div class="tab">
+      <table class="form-table">
 					<tbody>
 						<tr>
 							<th>
@@ -125,6 +130,15 @@ class Gumlet_Options_Page
 							<td>
 								<input id="gumlet_settings[original_images]" type="checkbox" name="gumlet_settings[original_images]" value="1" <?php checked($this->get_option('original_images')) ?> />
                 <p style="color: #666">If this is enabled (recommended), plugin will use original images before processing. <br>If this is not enabled, Gumlet will use images resized by wordpress for further processing.</p>
+							</td>
+						</tr>
+            <tr>
+							<th>
+								<label class="description" for="gumlet_settings[server_webp]"><?php esc_html_e('Browser Webp Detect', 'gumlet'); ?></label>
+							</th>
+							<td>
+								<input id="gumlet_settings[server_webp]" type="checkbox" name="gumlet_settings[server_webp]" value="1" <?php checked($this->get_option('server_webp')) ?> />
+                <p style="color: #666">if this is enabled, plugin will detect Webp support from browser rather than from server.(recommended OFF)</p>
 							</td>
 						</tr>
             <tr>
@@ -145,15 +159,45 @@ class Gumlet_Options_Page
                 <p style="color: #666">The URLs you enter here will not be processed by Gumlet. Please enter one URL per line.</p>
 							</td>
 						</tr>
-            <tr>
-							<th>
-							</th>
-							<td>
-								<input type="submit" class="button-primary" value="<?php esc_html_e('Save Options', 'gumlet'); ?>"/>
-							</td>
-						</tr>
           </tbody>
         </table>
+    </div>
+  </div>
+<input type="submit" class="button-primary" value="<?php esc_html_e('Save Options', 'gumlet'); ?>"/> 
+<style>
+ 
+.mytabs {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 5px auto;
+    padding: 5px;
+}
+
+.mytabs input[type="radio"] {
+    display: none;
+}
+
+.mytabs .tab {
+    width: 100%;
+    padding: 20px;
+    background: #fff;
+    order: 1;
+    display: none;
+}
+.mytabs .mytablabel {
+    padding: 10px;
+    background: #e2e2e2;
+}
+
+.mytabs input[type='radio']:checked + label + .tab {
+    display: block;
+}
+
+.mytabs input[type="radio"]:checked + label {
+    background: #fff;
+}
+</style>
+      
 			</form>
       <br>
 			<p class="description">

@@ -37,7 +37,6 @@ function gumlet_plugin_admin_action_links($links, $file)
         $settings_link = '<a href="options-general.php?page=gumlet-options">Settings</a>';
         array_unshift($links, $settings_link);
     }
-
     return $links;
 }
 
@@ -48,6 +47,6 @@ function gumlet_plugin_activate()
 {
     // plugin activation code here...
     if (!get_option('gumlet_settings')) {
-        update_option('gumlet_settings', ["lazy_load" => 1, "original_images" => 1, "auto_compress"=> 1]);
+        update_option('gumlet_settings', ["lazy_load" => 1, "original_images" => 1, "auto_compress"=> 1, "server_webp"=> 0]);
     }
 }
