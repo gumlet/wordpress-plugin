@@ -6,8 +6,8 @@ Author: Gumlet
 Author URI: https://www.gumlet.com
 Requires at least: 3.3
 Requires PHP: 5.6.3
-Tested up to: 5.5
-Stable tag: 1.1.55
+Tested up to: 5.7
+Stable tag: 1.2.0
 License: BSD-2
 License URI: http://opensource.org/licenses/BSD-2-Clause
 
@@ -137,35 +137,6 @@ If you need any help, you can reach out to us at support@gumlet.com.
 
 == Changelog ==
 
-= 1.1.55 =
-* Fix image display for AMP.
-
-= 1.1.54 =
-* Fix image display for FB instant articles.
-
-= 1.1.53 =
-* Webp detection happens on client-side.
-
-= 1.1.51 =
-* Reverted changes in 1.1.50.
-
-= 1.1.50 =
-* Bug fix for some themes.
-
-= 1.1.48 =
-* Bug fix.
-
-= 1.1.47 =
-* Added more logging for easy debug.
-
-= 1.1.46 =
-* Added more logging for easy debug.
-
-= 1.1.45 =
-* Fixes for ajax requests.
-
-= 1.1.44 =
-* Woocommerce lightbox fix.
-
-= 1.1.43 =
-* Wordpress thumbnail fix.
+= 1.2.0 =
+* Settings panel revamped.
+* New option given to detect client-side WebP support.

@@ -138,7 +138,7 @@ class Gumlet_Options_Page
 							</th>
 							<td>
 								<input id="gumlet_settings[server_webp]" type="checkbox" name="gumlet_settings[server_webp]" value="1" <?php checked($this->get_option('server_webp')) ?> />
-                <p style="color: #666">if this is enabled, plugin will detect Webp support from browser rather than from server.(recommended OFF)</p>
+                <p style="color: #666">If this is enabled, plugin will detect Webp support from browser rather than from server.(recommended OFF)</p>
 							</td>
 						</tr>
             <tr>
@@ -163,9 +163,9 @@ class Gumlet_Options_Page
         </table>
     </div>
   </div>
-<input type="submit" class="button-primary" value="<?php esc_html_e('Save Options', 'gumlet'); ?>"/> 
+<input type="submit" class="button-primary" value="<?php esc_html_e('Save Options', 'gumlet'); ?>"/>
 <style>
- 
+
 .mytabs {
     display: flex;
     flex-wrap: wrap;
@@ -197,7 +197,7 @@ class Gumlet_Options_Page
     background: #fff;
 }
 </style>
-      
+
 			</form>
       <br>
 			<p class="description">
