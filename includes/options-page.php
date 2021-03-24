@@ -163,9 +163,9 @@ class Gumlet_Options_Page
         </table>
     </div>
   </div>
-<input type="submit" class="button-primary" value="<?php esc_html_e('Save Options', 'gumlet'); ?>"/>
+<input type="submit" class="button-primary" value="<?php esc_html_e('Save Options', 'gumlet'); ?>"/> 
 <style>
-
+ 
 .mytabs {
     display: flex;
     flex-wrap: wrap;
@@ -197,7 +197,7 @@ class Gumlet_Options_Page
     background: #fff;
 }
 </style>
-
+      
 			</form>
       <br>
 			<p class="description">
