@@ -150,7 +150,7 @@ class Gumlet
             is_feed()
             // ignoring FB instant articles..
             // ideally we should convert hostnames to gumlet hostname so traffic still comes to us.
-             || (isset( $_GET[ 'ia_markup' ] ) && $_GET[ 'ia_markup' ])
+            // || (isset( $_GET[ 'ia_markup' ] ) && $_GET[ 'ia_markup' ])
              || strpos($_SERVER['REQUEST_URI'], "/feed/") !== false
              || (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)
              || (defined('DOING_CRON') && DOING_CRON)
@@ -192,7 +192,7 @@ class Gumlet
     public function init_ob()
     {
         if ($this->isWelcome()) {
-            if (function_exists('amp_is_request') && amp_is_request()) {
+            if (function_exists('amp_is_request') && amp_is_request() || (isset( $_GET[ 'ia_markup' ] ) && $_GET[ 'ia_markup' ])) {
                 $this->logger->log("Inside replace_images_in amp!!!!!!!!!!!");
                 ob_start([$this, 'replace_images_in_amp_instant_article']);
             }
@@ -414,6 +414,9 @@ class Gumlet
                     $parsed_url = parse_url($src);
                     $parsed_url['host'] = $gumlet_host;
                     $src = $this->unparse_url($parsed_url);
+                    $auto_compress = (!empty($this->options['auto_compress'])) ? "true" : "false";
+                    $quality=(!empty($this->options['quality'])) ? $this->options['quality'] : 80;
+                    $src= $src . '?compress=' . $auto_compress . '&quality=' . $quality;
                     $this->logger->log($src);
 
                     if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host || !parse_url($src, PHP_URL_HOST)) {
