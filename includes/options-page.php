@@ -138,7 +138,7 @@ class Gumlet_Options_Page
 							</th>
 							<td>
 								<input id="gumlet_settings[server_webp]" type="checkbox" name="gumlet_settings[server_webp]" value="1" <?php checked($this->get_option('server_webp')) ?> />
-                <p style="color: #666">If this is enabled, plugin will detect Webp support from browser rather than from server.(recommended OFF)</p>
+                <p style="color: #666">if this is enabled, plugin will detect Webp support from browser rather than from server.(recommended OFF)</p>
 							</td>
 						</tr>
             <tr>

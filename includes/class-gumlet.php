@@ -99,8 +99,6 @@ class Gumlet
 
         add_action('wp_enqueue_scripts', [$this, 'enqueue_script'], 1);
 
-        //add_action('amp_post_template_data', [$this, 'replace_images_in_amp_instant_article'], 1);
-
         add_action('wp_loaded', [$this, 'init_ob'], 1);
         // add_filter('pum_popup_content', [ $this, 'replace_images_in_content' ], PHP_INT_MAX);
         // add_filter('the_content', [ $this, 'replace_images_in_content' ], PHP_INT_MAX);
@@ -131,9 +129,9 @@ class Gumlet
     {
         // ignoring Google AMP..
         // ideally we should convert hostnames to gumlet hostname so traffic still comes to us.
-        // if (function_exists('amp_is_request') && amp_is_request()) {
-        //     return false;
-        // }
+        if (function_exists('amp_is_request') && amp_is_request()) {
+            return false;
+        }
 
         if (isset($_SERVER['HTTP_REFERER'])) {
             $admin = parse_url(admin_url());
@@ -150,7 +148,7 @@ class Gumlet
             is_feed()
             // ignoring FB instant articles..
             // ideally we should convert hostnames to gumlet hostname so traffic still comes to us.
-            // || (isset( $_GET[ 'ia_markup' ] ) && $_GET[ 'ia_markup' ])
+             || (isset( $_GET[ 'ia_markup' ] ) && $_GET[ 'ia_markup' ])
              || strpos($_SERVER['REQUEST_URI'], "/feed/") !== false
              || (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)
              || (defined('DOING_CRON') && DOING_CRON)
@@ -192,13 +190,7 @@ class Gumlet
     public function init_ob()
     {
         if ($this->isWelcome()) {
-            if (function_exists('amp_is_request') && amp_is_request() || (isset( $_GET[ 'ia_markup' ] ) && $_GET[ 'ia_markup' ])) {
-                $this->logger->log("Inside replace_images_in amp!!!!!!!!!!!");
-                ob_start([$this, 'replace_images_in_amp_instant_article']);
-            }
-            else{
-                ob_start([$this, 'replace_images_in_content']);
-            }
+            ob_start([$this, 'replace_images_in_content']);
         }
     }
 
@@ -356,89 +348,6 @@ class Gumlet
         }
     }
 
-    //replace_images_in_amp_instant_article
-    /**
-     * Modify image urls in content to use gumlet host.
-     *
-     * @param $content
-     *
-     * @return string
-     */
-    public function replace_images_in_amp_instant_article($content)
-    {
-        $this->logger->log("Inside replace_images_in_amp");
-        if (! empty($this->options['cdn_link'])) {
-            $gumlet_host = parse_url($this->options['cdn_link'], PHP_URL_HOST);
-            if (isset($this->options['external_cdn_link'])) {
-                $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
-            }
-
-            $going_to_be_replaced_host = isset($external_cdn_host) ?  $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST);
-
-            // this is bad hack for working with S3 hosts without region name in-built. unhack it later
-            $is_s3_host = false;
-
-            if (strpos($going_to_be_replaced_host, 'amazonaws.com') !== false) {
-              $s3_host_array = explode(".", $going_to_be_replaced_host);
-              if(count($s3_host_array) == 5) {
-                // this is an s3 host with region name in-built
-                $is_s3_host = true;
-              }
-            }
-
-            $this->logger->log("Processing content:". $content);
-            // replaces src with data-gmsrc and removes srcset from images
-            if (preg_match_all('/<img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches, PREG_PATTERN_ORDER)) {
-                $this->logger->log("Matched regex amp:", $matches);
-                foreach ($matches[0] as $unconverted_img_tag) {
-                    $this->logger->log("Processing img amp:", $unconverted_img_tag);
-                    $doc = new DOMDocument();
-                    // convert image tag to UTF-8 encoding.
-                    if(function_exists("mb_convert_encoding")) {
-                      $img_tag = mb_convert_encoding($unconverted_img_tag, 'HTML-ENTITIES', "UTF-8");
-                    } else {
-                      $img_tag = $unconverted_img_tag;
-                    }
-
-                    @$doc->loadHTML($img_tag);
-                    $imageTag = $doc->getElementsByTagName('img')[0];
-                    $src = $imageTag->getAttribute('src');
-                    if (!$src) {
-                        $src = $imageTag->getAttribute('data-src');
-                    }
-
-                    if (!$src) {
-                        $src = $imageTag->getAttribute('data-large_image');
-                    }
-                    $this->logger->log($src);
-                    $parsed_url = parse_url($src);
-                    $parsed_url['host'] = $gumlet_host;
-                    $src = $this->unparse_url($parsed_url);
-                    $auto_compress = (!empty($this->options['auto_compress'])) ? "true" : "false";
-                    $quality=(!empty($this->options['quality'])) ? $this->options['quality'] : 80;
-                    $src= $src . '?compress=' . $auto_compress . '&quality=' . $quality;
-                    $this->logger->log($src);
-
-                    if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host || !parse_url($src, PHP_URL_HOST)) {
-                        $imageTag->setAttribute("src", $src);
-                        //$imageTag->setAttribute("src", plugins_url('assets/images/pixel.png', __DIR__));
-                        $imageTag->removeAttribute("srcset");
-                        $imageTag->removeAttribute("data-src");
-                        $imageTag->removeAttribute("data-srcset");
-                        $imageTag->removeAttribute("data-lazy-srcset");
-                        $imageTag->removeAttribute("data-lazy-src");
-                        $new_img_tag = $doc->saveHTML($imageTag);
-                        $this->logger->log("New img tag:", $new_img_tag);
-                        $content = str_replace($unconverted_img_tag, $new_img_tag, $content);
-                    } else {
-                      $this->logger->log("Skipping due to mismatched host to be replaced.");
-                    }
-                }
-            }
-        }
-        return $content;        
-    }
-
     /**
      * Modify image urls in content to use gumlet host.
      *
@@ -461,6 +370,7 @@ class Gumlet
             }
 
             $going_to_be_replaced_host = isset($external_cdn_host) ?  $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST);
+
 
             // this is bad hack for working with S3 hosts without region name in-built. unhack it later
             $is_s3_host = false;
