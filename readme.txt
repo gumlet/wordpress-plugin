@@ -54,7 +54,7 @@ Gumlet CDN can be integrated with popular plugins like WP Rocket to deliver your
 
 = WHAT OUR USERS HAVE TO SAY =
 
-Gumlet image optimization is used by more than 3000 sites across the world. From small blogs to giant publishers like [BloombergQuint](https://bloombergquint.com) rely on us for optimized image delivery.
+Gumlet image optimization is used by more than 6000 sites across the world. From small blogs to giant publishers like [BloombergQuint](https://bloombergquint.com) rely on us for optimized image delivery.
 
 ★★★★★
 > "A very good Image optimization plugin" - [crackverbal](https://profiles.wordpress.org/crackverbal/)
