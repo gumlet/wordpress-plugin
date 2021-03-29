@@ -368,9 +368,11 @@ class Gumlet
     {
         $this->logger->log("Inside replace_images_in_amp");
         if (! empty($this->options['cdn_link'])) {
+            
             $gumlet_host = parse_url($this->options['cdn_link'], PHP_URL_HOST);
             $auto_compress = (!empty($this->options['auto_compress'])) ? "true" : "false";
             $quality=(!empty($this->options['quality'])) ? $this->options['quality'] : 80;
+            
             if (isset($this->options['external_cdn_link'])) {
                 $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
             }
@@ -391,34 +393,38 @@ class Gumlet
             $this->logger->log("Processing content:". $content);
             // replacing img src in amp-img tag.
             if (preg_match_all('/<amp-\img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches, PREG_PATTERN_ORDER)) {
-                $this->logger->log("Matched regex amp:", $matches);
+                $this->logger->log("Matched regex amp amp tag:", $matches);
                 $len  = count($matches[0]);
-                $this->logger->log($len);
                 for ($i=0; $i < $len ; $i++) { 
                     $amp_img_tag=$matches[0][$i];
                     $src=$matches[2][$i];
-                    $this->logger->log($src);
+                    
+                    if (strpos($src, ';base64,') !== false || strpos($src, 'data:image/svg+xml') !== false) {
+                        // does not process data URL.
+                        $this->logger->log("Skipping due to data URL");
+                        continue;
+                    }
+
                     if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host || !parse_url($src, PHP_URL_HOST)) {
                         $parsed_url = parse_url($src);
+                        $query = 'compress=' . $auto_compress . '&quality=' . $quality;
                         $parsed_url['host'] = $gumlet_host;
+                        $parsed_url['query'] = $query;
                         $newsrc = $this->unparse_url($parsed_url);
-                        $newsrc= $newsrc . '?compress=' . $auto_compress . '&quality=' . $quality;
-                        $this->logger->log($newsrc);
                         $new_img_tag = str_replace($src, $newsrc ,$amp_img_tag);
-                        $this->logger->log($new_img_tag);
                         $content = str_replace($amp_img_tag, $new_img_tag, $content);
-                        //$content = str_replace($amp_img_tag, $newsrc, $content);
                     }
                     else{
                         $this->logger->log("Skipping due to mismatched host to be replaced.");
                     }
                 }
             }
+
             //replaces src with data-gmsrc and removes srcset from images
             if (preg_match_all('/<img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches, PREG_PATTERN_ORDER)) {
-                $this->logger->log("Matched regex amp:", $matches);
+                $this->logger->log("Matched regex amp img tag:", $matches);
                 foreach ($matches[0] as $unconverted_img_tag) {
-                    $this->logger->log("Processing img amp:", $unconverted_img_tag);
+                    $this->logger->log("Processing img tag in amp:", $unconverted_img_tag);
                     $doc = new DOMDocument();
                     // convert image tag to UTF-8 encoding.
                     if(function_exists("mb_convert_encoding")) {
@@ -437,18 +443,20 @@ class Gumlet
                     if (!$src) {
                         $src = $imageTag->getAttribute('data-large_image');
                     }
-                    $this->logger->log($src);
-                    $parsed_url = parse_url($src);
-                    $parsed_url['host'] = $gumlet_host;
-                    $src = $this->unparse_url($parsed_url);
-                    $auto_compress = (!empty($this->options['auto_compress'])) ? "true" : "false";
-                    $quality=(!empty($this->options['quality'])) ? $this->options['quality'] : 80;
-                    //$src= $src . '?compress=' . $auto_compress . '&quality=' . $quality;
-                    $this->logger->log($src);
 
+                    if (strpos($src, ';base64,') !== false || strpos($src, 'data:image/svg+xml') !== false) {
+                        // does not process data URL.
+                        $this->logger->log("Skipping due to data URL");
+                        continue;
+                    }
+                    
                     if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host || !parse_url($src, PHP_URL_HOST)) {
+                        $parsed_url = parse_url($src);
+                        $query = 'compress=' . $auto_compress . '&quality=' . $quality;
+                        $parsed_url['host'] = $gumlet_host;
+                        $parsed_url['query'] = $query;
+                        $src = $this->unparse_url($parsed_url);
                         $imageTag->setAttribute("src", $src);
-                        //$imageTag->setAttribute("src", plugins_url('assets/images/pixel.png', __DIR__));
                         $imageTag->removeAttribute("srcset");
                         $imageTag->removeAttribute("data-src");
                         $imageTag->removeAttribute("data-srcset");
@@ -461,8 +469,7 @@ class Gumlet
                       $this->logger->log("Skipping due to mismatched host to be replaced.");
                     }
                 }
-            }
-            
+            }            
         }
         return $content;        
     }
