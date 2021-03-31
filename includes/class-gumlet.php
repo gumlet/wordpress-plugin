@@ -393,8 +393,8 @@ class Gumlet
             $this->logger->log("Processing content:". $content);
             // replacing img src in amp-img tag.
             if (preg_match_all('/<amp-img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches, PREG_PATTERN_ORDER)) {
-                $this->logger->log("Matched regex amp amp tag:", $matches);
                 $len  = count($matches[0]);
+                
                 for ($i=0; $i < $len ; $i++) { 
                     $amp_img_tag=$matches[0][$i];
                     $src=$matches[2][$i];
@@ -422,7 +422,6 @@ class Gumlet
 
             // replacing img srcset in amp-img tag.
             if (preg_match_all('/<amp-img\s[^>]*srcset=([\"\']??)([^\">]*?)\1[^>]*>/iU', $content, $matches, PREG_PATTERN_ORDER)) {
-                $this->logger->log("Matched regex amp srcset tag:", $matches);
                 $len  = count($matches[0]);
                 
                 for ($i=0; $i < $len ; $i++) { 
@@ -468,35 +467,34 @@ class Gumlet
                 }
             }
 
-            // if (preg_match_all('/<img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches, PREG_PATTERN_ORDER)) {
-            //     $this->logger->log("Matched regex amp img tag:", $matches);
+            // replacing img src in img tag.
+            if (preg_match_all('/<img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches, PREG_PATTERN_ORDER)) {
+                $len  = count($matches[0]);
 
-            //     $len  = count($matches[0]);
-            //     for ($i=0; $i < $len ; $i++) { 
-            //         $img_tag=$matches[0][$i];
-            //         $src=$matches[2][$i];
+                for ($i=0; $i < $len ; $i++) { 
+                    $img_tag=$matches[0][$i];
+                    $src=$matches[2][$i];
                     
-            //         if (strpos($src, ';base64,') !== false || strpos($src, 'data:image/svg+xml') !== false) {
-            //             // does not process data URL.
-            //             $this->logger->log("Skipping due to data URL");
-            //             continue;
-            //         }
+                    if (strpos($src, ';base64,') !== false || strpos($src, 'data:image/svg+xml') !== false) {
+                        // does not process data URL.
+                        $this->logger->log("Skipping due to data URL");
+                        continue;
+                    }
 
-            //         if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host || !parse_url($src, PHP_URL_HOST)) {
-            //             $parsed_url = parse_url($src);
-            //             $query = 'compress=' . $auto_compress . '&quality=' . $quality;
-            //             $parsed_url['host'] = $gumlet_host;
-            //             $parsed_url['query'] = $query;
-            //             $newsrc = $this->unparse_url($parsed_url);
-            //             $new_img_tag = str_replace($src, $newsrc ,$img_tag);
-            //             $content = str_replace($img_tag, $new_img_tag, $content);
-            //         }
-            //         else{
-            //             $this->logger->log("Skipping due to mismatched host to be replaced.");
-            //         }
-            //     }
-                
-            // }
+                    if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host || !parse_url($src, PHP_URL_HOST)) {
+                        $parsed_url = parse_url($src);
+                        $query = 'compress=' . $auto_compress . '&quality=' . $quality;
+                        $parsed_url['host'] = $gumlet_host;
+                        $parsed_url['query'] = $query;
+                        $newsrc = $this->unparse_url($parsed_url);
+                        $new_img_tag = str_replace($src, $newsrc ,$img_tag);
+                        $content = str_replace($img_tag, $new_img_tag, $content);
+                    }
+                    else{
+                        $this->logger->log("Skipping due to mismatched host to be replaced.");
+                    }
+                }                
+            }
         }
         return $content;        
     }
