@@ -392,7 +392,7 @@ class Gumlet
 
             $this->logger->log("Processing content:". $content);
             // replacing img src in amp-img tag.
-            if (preg_match_all('/<amp-\img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches, PREG_PATTERN_ORDER)) {
+            if (preg_match_all('/<amp-img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches, PREG_PATTERN_ORDER)) {
                 $this->logger->log("Matched regex amp amp tag:", $matches);
                 $len  = count($matches[0]);
                 for ($i=0; $i < $len ; $i++) { 
@@ -420,56 +420,83 @@ class Gumlet
                 }
             }
 
-            //replaces src with data-gmsrc and removes srcset from images
-            if (preg_match_all('/<img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches, PREG_PATTERN_ORDER)) {
-                $this->logger->log("Matched regex amp img tag:", $matches);
-                foreach ($matches[0] as $unconverted_img_tag) {
-                    $this->logger->log("Processing img tag in amp:", $unconverted_img_tag);
-                    $doc = new DOMDocument();
-                    // convert image tag to UTF-8 encoding.
-                    if(function_exists("mb_convert_encoding")) {
-                      $img_tag = mb_convert_encoding($unconverted_img_tag, 'HTML-ENTITIES', "UTF-8");
-                    } else {
-                      $img_tag = $unconverted_img_tag;
-                    }
+            // replacing img srcset in amp-img tag.
+            if (preg_match_all('/<amp-img\s[^>]*srcset=([\"\']??)([^\">]*?)\1[^>]*>/iU', $content, $matches, PREG_PATTERN_ORDER)) {
+                $this->logger->log("Matched regex amp srcset tag:", $matches);
+                $len  = count($matches[0]);
+                
+                for ($i=0; $i < $len ; $i++) { 
+                    $split_string=explode(",",$matches[2][$i]);
+                    $amp_img_tag=$matches[0][$i];
+                    //adding space to 1st src,to easily remove space in next loop.
+                    $split_string[0]=" " . $split_string[0];
+                    $split_string_length=count($split_string);
+                    for ($j=0; $j < $split_string_length ; $j++) { 
+                        $src_array=explode(" ",$split_string[$j]);
+                        $src=$src_array[1];
+                                                
+                        if (strpos($src, ';base64,') !== false || strpos($src, 'data:image/svg+xml') !== false)
+                        {
+                            // does not process data URL.
+                            $this->logger->log("Skipping due to data URL");
+                            continue;
+                        }
 
-                    @$doc->loadHTML($img_tag);
-                    $imageTag = $doc->getElementsByTagName('img')[0];
-                    $src = $imageTag->getAttribute('src');
-                    if (!$src) {
-                        $src = $imageTag->getAttribute('data-src');
-                    }
+                        if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host || !parse_url($src, PHP_URL_HOST)) {
+                            $parsed_url = parse_url($src);
+                            $query = 'compress=' . $auto_compress . '&quality=' . $quality;
+                            $parsed_url['host'] = $gumlet_host;
+                            $parsed_url['query'] = $query;
+                            $newsrc = $this->unparse_url($parsed_url);
+                            $src_array[1]=$newsrc;
+                        }
+                        else{
+                            $this->logger->log("Skipping due to mismatched host to be replaced.");
+                        }
 
-                    if (!$src) {
-                        $src = $imageTag->getAttribute('data-large_image');
+                        //checking if not last element than join string with "," otherwise join normal string.
+                        if ($j+1 != $split_string_length) {
+                            $split_string[$j]=$src_array[0] . " " .$src_array[1] . " ".$src_array[2] .",";
+                        }
+                        elseif($j+1 == $split_string_length){
+                            $split_string[$j]=$src_array[0] . " " .$src_array[1] . " ".$src_array[2];
+                        }                         
+                        $finalarray[$i]= $finalarray[$i] . $split_string[$j];
                     }
-
-                    if (strpos($src, ';base64,') !== false || strpos($src, 'data:image/svg+xml') !== false) {
-                        // does not process data URL.
-                        $this->logger->log("Skipping due to data URL");
-                        continue;
-                    }
-                    
-                    if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host || !parse_url($src, PHP_URL_HOST)) {
-                        $parsed_url = parse_url($src);
-                        $query = 'compress=' . $auto_compress . '&quality=' . $quality;
-                        $parsed_url['host'] = $gumlet_host;
-                        $parsed_url['query'] = $query;
-                        $src = $this->unparse_url($parsed_url);
-                        $imageTag->setAttribute("src", $src);
-                        $imageTag->removeAttribute("srcset");
-                        $imageTag->removeAttribute("data-src");
-                        $imageTag->removeAttribute("data-srcset");
-                        $imageTag->removeAttribute("data-lazy-srcset");
-                        $imageTag->removeAttribute("data-lazy-src");
-                        $new_img_tag = $doc->saveHTML($imageTag);
-                        $this->logger->log("New img tag:", $new_img_tag);
-                        $content = str_replace($unconverted_img_tag, $new_img_tag, $content);
-                    } else {
-                      $this->logger->log("Skipping due to mismatched host to be replaced.");
-                    }
+                    $new_img_tag = str_replace($matches[2][$i], $finalarray[$i] ,$amp_img_tag);
+                    $content = str_replace($amp_img_tag, $new_img_tag, $content);
                 }
-            }            
+            }
+
+            // if (preg_match_all('/<img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches, PREG_PATTERN_ORDER)) {
+            //     $this->logger->log("Matched regex amp img tag:", $matches);
+
+            //     $len  = count($matches[0]);
+            //     for ($i=0; $i < $len ; $i++) { 
+            //         $img_tag=$matches[0][$i];
+            //         $src=$matches[2][$i];
+                    
+            //         if (strpos($src, ';base64,') !== false || strpos($src, 'data:image/svg+xml') !== false) {
+            //             // does not process data URL.
+            //             $this->logger->log("Skipping due to data URL");
+            //             continue;
+            //         }
+
+            //         if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host || !parse_url($src, PHP_URL_HOST)) {
+            //             $parsed_url = parse_url($src);
+            //             $query = 'compress=' . $auto_compress . '&quality=' . $quality;
+            //             $parsed_url['host'] = $gumlet_host;
+            //             $parsed_url['query'] = $query;
+            //             $newsrc = $this->unparse_url($parsed_url);
+            //             $new_img_tag = str_replace($src, $newsrc ,$img_tag);
+            //             $content = str_replace($img_tag, $new_img_tag, $content);
+            //         }
+            //         else{
+            //             $this->logger->log("Skipping due to mismatched host to be replaced.");
+            //         }
+            //     }
+                
+            // }
         }
         return $content;        
     }
