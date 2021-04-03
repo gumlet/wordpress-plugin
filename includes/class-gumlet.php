@@ -192,8 +192,7 @@ class Gumlet
     public function init_ob()
     {
         if ($this->isWelcome()) {
-            if (function_exists('amp_is_request') && amp_is_request() || (isset( $_GET[ 'ia_markup' ] ) && $_GET[ 'ia_markup' ])) {
-                $this->logger->log("Inside replace_images_in amp!!!!!!!!!!!");
+            if ( (function_exists('amp_is_request') && amp_is_request()) ||  (isset( $_GET[ 'ia_markup' ]  && $_GET[ 'ia_markup' ]))) {
                 ob_start([$this, 'replace_images_in_amp_instant_article']);
             }
             else{
@@ -368,37 +367,24 @@ class Gumlet
     {
         $this->logger->log("Inside replace_images_in_amp");
         if (! empty($this->options['cdn_link'])) {
-            
+
             $gumlet_host = parse_url($this->options['cdn_link'], PHP_URL_HOST);
             $auto_compress = (!empty($this->options['auto_compress'])) ? "true" : "false";
             $quality=(!empty($this->options['quality'])) ? $this->options['quality'] : 80;
-            
+
             if (isset($this->options['external_cdn_link'])) {
                 $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
             }
 
             $going_to_be_replaced_host = isset($external_cdn_host) ?  $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST);
 
-            // this is bad hack for working with S3 hosts without region name in-built. unhack it later
-            $is_s3_host = false;
-
-            if (strpos($going_to_be_replaced_host, 'amazonaws.com') !== false) {
-              $s3_host_array = explode(".", $going_to_be_replaced_host);
-              if(count($s3_host_array) == 5) {
-                // this is an s3 host with region name in-built
-                $is_s3_host = true;
-              }
-            }
-
             $this->logger->log("Processing content:". $content);
             // replacing img src in amp-img tag.
             if (preg_match_all('/<amp-img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches, PREG_PATTERN_ORDER)) {
-                $len  = count($matches[0]);
-                
-                for ($i=0; $i < $len ; $i++) { 
+                for ($i=0; $i < count($matches[0]); $i++) {
                     $amp_img_tag=$matches[0][$i];
                     $src=$matches[2][$i];
-                    
+
                     if (strpos($src, ';base64,') !== false || strpos($src, 'data:image/svg+xml') !== false) {
                         // does not process data URL.
                         $this->logger->log("Skipping due to data URL");
@@ -422,18 +408,15 @@ class Gumlet
 
             // replacing img srcset in amp-img tag.
             if (preg_match_all('/<amp-img\s[^>]*srcset=([\"\']??)([^\">]*?)\1[^>]*>/iU', $content, $matches, PREG_PATTERN_ORDER)) {
-                $len  = count($matches[0]);
-                
-                for ($i=0; $i < $len ; $i++) { 
-                    $split_string=explode(",",$matches[2][$i]);
+                for ($i=0; $i < count($matches[0]) ; $i++) {
                     $amp_img_tag=$matches[0][$i];
-                    //adding space to 1st src,to easily remove space in next loop.
-                    $split_string[0]=" " . $split_string[0];
-                    $split_string_length=count($split_string);
-                    for ($j=0; $j < $split_string_length ; $j++) { 
-                        $src_array=explode(" ",$split_string[$j]);
-                        $src=$src_array[1];
-                                                
+
+                    $src_and_sizes=explode(",",$matches[2][$i]);
+
+                    for ($j=0; $j < count($src_and_sizes) ; $j++) {
+                        $src_sizes_array=explode(" ",trim($src_and_sizes[$j]));
+                        $src=trim($src_sizes_array[0]);
+
                         if (strpos($src, ';base64,') !== false || strpos($src, 'data:image/svg+xml') !== false)
                         {
                             // does not process data URL.
@@ -447,34 +430,26 @@ class Gumlet
                             $parsed_url['host'] = $gumlet_host;
                             $parsed_url['query'] = $query;
                             $newsrc = $this->unparse_url($parsed_url);
-                            $src_array[1]=$newsrc;
+                            $src_sizes_array[0]=$newsrc;
                         }
                         else{
                             $this->logger->log("Skipping due to mismatched host to be replaced.");
                         }
 
-                        //checking if not last element than join string with "," otherwise join normal string.
-                        if ($j+1 != $split_string_length) {
-                            $split_string[$j]=$src_array[0] . " " .$src_array[1] . " ".$src_array[2] .",";
-                        }
-                        elseif($j+1 == $split_string_length){
-                            $split_string[$j]=$src_array[0] . " " .$src_array[1] . " ".$src_array[2];
-                        }                         
-                        $finalarray[$i]= $finalarray[$i] . $split_string[$j];
+                        $src_and_sizes[$j] = join(" ", $src_sizes_array);
+
                     }
-                    $new_img_tag = str_replace($matches[2][$i], $finalarray[$i] ,$amp_img_tag);
+                    $new_img_tag = str_replace($matches[2][$i], join(", ", $src_and_sizes) ,$amp_img_tag);
                     $content = str_replace($amp_img_tag, $new_img_tag, $content);
                 }
             }
 
             // replacing img src in img tag.
             if (preg_match_all('/<img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches, PREG_PATTERN_ORDER)) {
-                $len  = count($matches[0]);
-
-                for ($i=0; $i < $len ; $i++) { 
+                for ($i=0; $i < count($matches[0]) ; $i++) {
                     $img_tag=$matches[0][$i];
                     $src=$matches[2][$i];
-                    
+
                     if (strpos($src, ';base64,') !== false || strpos($src, 'data:image/svg+xml') !== false) {
                         // does not process data URL.
                         $this->logger->log("Skipping due to data URL");
@@ -493,10 +468,10 @@ class Gumlet
                     else{
                         $this->logger->log("Skipping due to mismatched host to be replaced.");
                     }
-                }                
+                }
             }
         }
-        return $content;        
+        return $content;
     }
 
     /**
