@@ -101,7 +101,7 @@ class Gumlet
 
         //add_action('amp_post_template_data', [$this, 'replace_images_in_amp_instant_article'], 1);
 
-        add_action('wp_loaded', [$this, 'init_ob'], 1);
+        add_action('wp', [$this, 'init_ob'], 1);
         // add_filter('pum_popup_content', [ $this, 'replace_images_in_content' ], PHP_INT_MAX);
         // add_filter('the_content', [ $this, 'replace_images_in_content' ], PHP_INT_MAX);
         // add_filter('post_thumbnail_html', [ $this, 'replace_images_in_content' ], PHP_INT_MAX );
@@ -469,6 +469,44 @@ class Gumlet
                     else{
                         $this->logger->log("Skipping due to mismatched host to be replaced.");
                     }
+                }
+            }
+
+            // replacing img srcset in img tag.
+            if (preg_match_all('/<img\s[^>]*srcset=([\"\']??)([^\">]*?)\1[^>]*>/iU', $content, $matches, PREG_PATTERN_ORDER)) {
+                for ($i=0; $i < count($matches[0]) ; $i++) {
+                    $amp_img_tag=$matches[0][$i];
+
+                    $src_and_sizes=explode(",",$matches[2][$i]);
+
+                    for ($j=0; $j < count($src_and_sizes) ; $j++) {
+                        $src_sizes_array=explode(" ",trim($src_and_sizes[$j]));
+                        $src=trim($src_sizes_array[0]);
+
+                        if (strpos($src, ';base64,') !== false || strpos($src, 'data:image/svg+xml') !== false)
+                        {
+                            // does not process data URL.
+                            $this->logger->log("Skipping due to data URL");
+                            continue;
+                        }
+
+                        if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host || !parse_url($src, PHP_URL_HOST)) {
+                            $parsed_url = parse_url($src);
+                            $query = 'compress=' . $auto_compress . '&quality=' . $quality;
+                            $parsed_url['host'] = $gumlet_host;
+                            $parsed_url['query'] = $query;
+                            $newsrc = $this->unparse_url($parsed_url);
+                            $src_sizes_array[0]=$newsrc;
+                        }
+                        else{
+                            $this->logger->log("Skipping due to mismatched host to be replaced.");
+                        }
+
+                        $src_and_sizes[$j] = join(" ", $src_sizes_array);
+
+                    }
+                    $new_img_tag = str_replace($matches[2][$i], join(", ", $src_and_sizes) ,$amp_img_tag);
+                    $content = str_replace($amp_img_tag, $new_img_tag, $content);
                 }
             }
         }
