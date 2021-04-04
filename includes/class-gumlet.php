@@ -192,7 +192,7 @@ class Gumlet
     public function init_ob()
     {
         if ($this->isWelcome()) {
-            if(function_exists('amp_is_request') && amp_is_request() || (isset( $_GET[ 'ia_markup' ] ) && $_GET[ 'ia_markup' ]))
+            if( (function_exists('amp_is_request') && amp_is_request()) || (isset($_GET['ia_markup']) && $_GET[ 'ia_markup' ]))
             {
                 ob_start([$this, 'replace_images_in_amp_instant_article']);
             }
