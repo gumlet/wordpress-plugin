@@ -522,6 +522,10 @@ class Gumlet
      */
     public function replace_images_in_content($content)
     {
+        // $myfile = fopen("/Users/adityapatadia/gumlet/wordpress/test.txt", "r") or die("Unable to open file!");
+        // $content = fread($myfile,filesize("/Users/adityapatadia/gumlet/wordpress/test.txt"));
+        // fclose($myfile); 
+
         $this->logger->log("Inside replace_images");
 
         $excluded_urls = explode("\n", $this->get_option("exclude_images"));
@@ -533,9 +537,8 @@ class Gumlet
             if (isset($this->options['external_cdn_link'])) {
                 $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
             }
-
+            
             $going_to_be_replaced_host = isset($external_cdn_host) ?  $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST);
-
             // this is bad hack for working with S3 hosts without region name in-built. unhack it later
             $is_s3_host = false;
 
@@ -546,7 +549,6 @@ class Gumlet
                 $is_s3_host = true;
               }
             }
-            $this->logger->log("Processing content:". $content);
             // replaces src with data-gmsrc and removes srcset from images
             if (preg_match_all('/<img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches, PREG_PATTERN_ORDER)) {
                 $this->logger->log("Matched regex:", $matches);
@@ -570,6 +572,7 @@ class Gumlet
                     if (!$src) {
                         $src = $imageTag->getAttribute('data-large_image');
                     }
+                    $this->logger->log("src after :", $src);
 
                     if (in_array($src, $excluded_urls)) {
                         // don't process excluded URLs
@@ -609,7 +612,6 @@ class Gumlet
                         $src = $this->unparse_url($parsed_url);
                       }
                     }
-
                     if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host || !parse_url($src, PHP_URL_HOST)) {
                         $imageTag->setAttribute("data-gmsrc", $src);
                         $imageTag->setAttribute("src", plugins_url('assets/images/pixel.png', __DIR__));
