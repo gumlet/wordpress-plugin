@@ -79,19 +79,12 @@ class Gumlet
     public function __construct()
     {
         $this->options = get_option('gumlet_settings', []);
+
         $this->logger = GumletLogger::instance();
 
         $this->doingAjax = (function_exists("wp_doing_ajax") && wp_doing_ajax()) || (defined('DOING_AJAX') && DOING_AJAX);
 
         // Change filter load order to ensure it loads after other CDN url transformations i.e. Amazon S3 which loads at position 99.
-
-
-        // add_filter('wp_get_attachment_url', [ $this, 'replace_image_url' ], 100);
-        // add_filter('gumlet/add-image-url', [ $this, 'replace_image_url' ]);
-
-        // add_filter('image_downsize', [ $this, 'image_downsize' ], 10, 3);
-
-        // add_filter('wp_calculate_image_srcset', [ $this, 'calculate_image_srcset' ], 10, 5);
 
         add_filter('script_loader_tag', [$this,'add_asyncdefer_attribute'], 10, 2);
 
@@ -102,11 +95,6 @@ class Gumlet
         //add_action('amp_post_template_data', [$this, 'replace_images_in_amp_instant_article'], 1);
 
         add_action('wp', [$this, 'init_ob'], 1);
-        // add_filter('pum_popup_content', [ $this, 'replace_images_in_content' ], PHP_INT_MAX);
-        // add_filter('the_content', [ $this, 'replace_images_in_content' ], PHP_INT_MAX);
-        // add_filter('post_thumbnail_html', [ $this, 'replace_images_in_content' ], PHP_INT_MAX );
-        // add_filter('get_image_tag', [ $this, 'replace_images_in_content' ], PHP_INT_MAX );
-            // add_filter('wp_get_attachment_image_attributes', [ $this, 'replace_images_in_content' ], PHP_INT_MAX );
     }
 
     public function add_asyncdefer_attribute($tag, $handle)
@@ -129,12 +117,6 @@ class Gumlet
 
     protected function isWelcome()
     {
-        // ignoring Google AMP..
-        // ideally we should convert hostnames to gumlet hostname so traffic still comes to us.
-        // if (function_exists('amp_is_request') && amp_is_request()) {
-        //     return false;
-        // }
-
         if (isset($_SERVER['HTTP_REFERER'])) {
             $admin = parse_url(admin_url());
             $referrer = parse_url($_SERVER['HTTP_REFERER']);
@@ -148,9 +130,6 @@ class Gumlet
         $referrerPath = (isset($referrer['path']) ? $referrer['path'] : '');
         return !(
             is_feed()
-            // ignoring FB instant articles..
-            // ideally we should convert hostnames to gumlet hostname so traffic still comes to us.
-            // || (isset( $_GET[ 'ia_markup' ] ) && $_GET[ 'ia_markup' ])
              || strpos($_SERVER['REQUEST_URI'], "/feed/") !== false
              || (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)
              || (defined('DOING_CRON') && DOING_CRON)
@@ -267,17 +246,17 @@ class Gumlet
                 isset($parsed_url['host'], $parsed_url['path'])
                 && ($parsed_url['host'] === parse_url(home_url('/'), PHP_URL_HOST) || (isset($this->options['external_cdn_link']) && ! empty($this->options['external_cdn_link']) && strpos($this->options['external_cdn_link'], $parsed_url['host']) !== false))
                 && preg_match('/\.(jpg|jpeg|gif|png)$/i', $parsed_url['path'])
-            ) {
+            ) 
+            {
                 $cdn = parse_url($this->options['cdn_link']);
 
-                foreach ([ 'scheme', 'host', 'port' ] as $url_part) {
+                foreach ([ 'scheme', 'host', 'port' ] as $url_part){
                     if (isset($cdn[ $url_part ])) {
                         $parsed_url[ $url_part ] = $cdn[ $url_part ];
                     } else {
                         unset($parsed_url[ $url_part ]);
                     }
                 }
-
                 if (! empty($this->options['external_cdn_link'])) {
                     $cdn_path = parse_url($this->options['external_cdn_link'], PHP_URL_PATH);
 
@@ -285,13 +264,10 @@ class Gumlet
                         $parsed_url['path'] = str_replace($cdn_path, '', $parsed_url['path']);
                     }
                 }
-
                 $url = http_build_url($parsed_url);
-
                 $url = add_query_arg($this->get_global_params(), $url);
             }
         }
-
         return $url;
     }
 
@@ -514,6 +490,111 @@ class Gumlet
         return $content;
     }
 
+    public function replace_src_in_imgtag($matches,$content)
+    {
+        $this->logger->log("Matched regex:", $matches);
+        foreach ($matches[0] as $unconverted_img_tag) {
+            $this->logger->log("Processing img:", $unconverted_img_tag);
+            $doc = new DOMDocument();
+            // convert image tag to UTF-8 encoding.
+            if(function_exists("mb_convert_encoding")) {
+                $img_tag = mb_convert_encoding($unconverted_img_tag, 'HTML-ENTITIES', "UTF-8");
+            } else {
+                $img_tag = $unconverted_img_tag;
+            }
+
+            @$doc->loadHTML($img_tag);
+            $imageTag = $doc->getElementsByTagName('img')[0];
+            $src = $imageTag->getAttribute('src');
+            if (!$src) {
+                $src = $imageTag->getAttribute('data-src');
+            }
+
+            if (!$src) {
+                $src = $imageTag->getAttribute('data-large_image');
+            }
+            $this->logger->log("src after :", $src);
+
+            if (in_array($src, $excluded_urls)) {
+                // don't process excluded URLs
+                $imageTag->setAttribute("data-gumlet", 'false');
+                $new_img_tag = $doc->saveHTML($imageTag);
+                $content = str_replace($unconverted_img_tag, $new_img_tag, $content);
+                $this->logger->log("Skipping due to excluded URL");
+                continue;
+            }
+
+            if (strpos($src, ';base64,') !== false || strpos($src, 'data:image/svg+xml') !== false) {
+                // does not process data URL.
+                $this->logger->log("Skipping due to data URL");
+                continue;
+            }
+
+            if (strpos(stripcslashes($src), '"') !== false) {
+                // this URL is actually part of JSON data. It has quotes in it. We will ignore this URL
+                continue;
+            }
+
+            preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $src, $size_matches, PREG_PATTERN_ORDER);
+            if ($size_matches[0] && strlen($size_matches[0][0]) > 4 && $this->get_option("original_images")) {
+                $src = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $src);
+            }
+
+            $current_host = parse_url($src, PHP_URL_HOST);
+
+            // S3 host without region is detected here and replaced with host with region.
+            // this is a bad hack. unhack it.
+            if(strpos($current_host, "amazonaws.com") !== false){
+                $current_host_array = explode(".", $current_host);
+                if(count($current_host_array) == 4 && $is_s3_host) {
+                // this current host is S3 URL without region in it. put actual host with region into it.
+                $parsed_url = parse_url($src);
+                $parsed_url['host'] = $going_to_be_replaced_host;
+                $src = $this->unparse_url($parsed_url);
+                }
+            }
+            if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host || !parse_url($src, PHP_URL_HOST)) {
+                $imageTag->setAttribute("data-gmsrc", $src);
+                $imageTag->setAttribute("src", plugins_url('assets/images/pixel.png', __DIR__));
+                $imageTag->removeAttribute("srcset");
+                $imageTag->removeAttribute("data-src");
+                $imageTag->removeAttribute("data-srcset");
+                $imageTag->removeAttribute("data-lazy-srcset");
+                $imageTag->removeAttribute("data-lazy-src");
+                // check if this is magento product image and if it is, set data-src as well
+                if (strpos($imageTag->getAttribute("class"), "wp-post-image") !== false  && $imageTag->getAttribute("data-large_image_width") != '') {
+                    $imageTag->setAttribute("data-src", $src);
+                }
+                $new_img_tag = $doc->saveHTML($imageTag);
+                $this->logger->log("New img tag:", $new_img_tag);
+                $content = str_replace($unconverted_img_tag, $new_img_tag, $content);
+            } else {
+                $this->logger->log("Skipping due to mismatched host to be replaced.");
+            }
+        }
+        return $content;
+    }
+    
+    public function replace_srcset_in_source($matches,$content) {
+        foreach ($matches[0] as $unconverted_source_tag) {
+            $doc = new DOMDocument();
+            // convert image tag to UTF-8 encoding.
+            if(function_exists("mb_convert_encoding")) {
+              $source_tag = mb_convert_encoding($unconverted_source_tag, 'HTML-ENTITIES', "UTF-8");
+            } else {
+              $source_tag = $unconverted_source_tag;
+            }
+            @$doc->loadHTML($source_tag);
+            $sourceTag = $doc->getElementsByTagName('source')[0];
+            $src = $sourceTag->getAttribute('srcset');
+            $sourceTag->removeAttribute("srcset");
+            $sourceTag->setAttribute("data-srcset", $src);
+            $new_source_tag = $doc->saveHTML($sourceTag);
+            $content = str_replace($unconverted_source_tag, $new_source_tag, $content);
+        }
+        return $content;
+    }
+
     /**
      * Modify image urls in content to use gumlet host.
      *
@@ -523,9 +604,9 @@ class Gumlet
      */
     public function replace_images_in_content($content)
     {
-        // $myfile = fopen("/Users/adityapatadia/gumlet/wordpress/test.txt", "r") or die("Unable to open file!");
-        // $content = fread($myfile,filesize("/Users/adityapatadia/gumlet/wordpress/test.txt"));
-        // fclose($myfile); 
+        $myfile = fopen("/Users/adityapatadia/gumlet/wordpress/test.txt", "r") or die("Unable to open file!");
+        $content = fread($myfile,filesize("/Users/adityapatadia/gumlet/wordpress/test.txt"));
+        fclose($myfile); 
 
         $this->logger->log("Inside replace_images");
 
@@ -553,106 +634,12 @@ class Gumlet
             $this->logger->log("Processing content:". $content);
             // replaces src with data-gmsrc and removes srcset from images
             if (preg_match_all('/<img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches, PREG_PATTERN_ORDER)) {
-                $this->logger->log("Matched regex:", $matches);
-                foreach ($matches[0] as $unconverted_img_tag) {
-                    $this->logger->log("Processing img:", $unconverted_img_tag);
-                    $doc = new DOMDocument();
-                    // convert image tag to UTF-8 encoding.
-                    if(function_exists("mb_convert_encoding")) {
-                      $img_tag = mb_convert_encoding($unconverted_img_tag, 'HTML-ENTITIES', "UTF-8");
-                    } else {
-                      $img_tag = $unconverted_img_tag;
-                    }
-
-                    @$doc->loadHTML($img_tag);
-                    $imageTag = $doc->getElementsByTagName('img')[0];
-                    $src = $imageTag->getAttribute('src');
-                    if (!$src) {
-                        $src = $imageTag->getAttribute('data-src');
-                    }
-
-                    if (!$src) {
-                        $src = $imageTag->getAttribute('data-large_image');
-                    }
-                    $this->logger->log("src after :", $src);
-
-                    if (in_array($src, $excluded_urls)) {
-                        // don't process excluded URLs
-                        $imageTag->setAttribute("data-gumlet", 'false');
-                        $new_img_tag = $doc->saveHTML($imageTag);
-                        $content = str_replace($unconverted_img_tag, $new_img_tag, $content);
-                        $this->logger->log("Skipping due to excluded URL");
-                        continue;
-                    }
-
-                    if (strpos($src, ';base64,') !== false || strpos($src, 'data:image/svg+xml') !== false) {
-                        // does not process data URL.
-                        $this->logger->log("Skipping due to data URL");
-                        continue;
-                    }
-
-                    if (strpos(stripcslashes($src), '"') !== false) {
-                        // this URL is actually part of JSON data. It has quotes in it. We will ignore this URL
-                        continue;
-                    }
-
-                    preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $src, $size_matches, PREG_PATTERN_ORDER);
-                    if ($size_matches[0] && strlen($size_matches[0][0]) > 4 && $this->get_option("original_images")) {
-                        $src = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $src);
-                    }
-
-                    $current_host = parse_url($src, PHP_URL_HOST);
-
-                    // S3 host without region is detected here and replaced with host with region.
-                    // this is a bad hack. unhack it.
-                    if(strpos($current_host, "amazonaws.com") !== false){
-                      $current_host_array = explode(".", $current_host);
-                      if(count($current_host_array) == 4 && $is_s3_host) {
-                        // this current host is S3 URL without region in it. put actual host with region into it.
-                        $parsed_url = parse_url($src);
-                        $parsed_url['host'] = $going_to_be_replaced_host;
-                        $src = $this->unparse_url($parsed_url);
-                      }
-                    }
-                    if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host || !parse_url($src, PHP_URL_HOST)) {
-                        $imageTag->setAttribute("data-gmsrc", $src);
-                        $imageTag->setAttribute("src", plugins_url('assets/images/pixel.png', __DIR__));
-                        $imageTag->removeAttribute("srcset");
-                        $imageTag->removeAttribute("data-src");
-                        $imageTag->removeAttribute("data-srcset");
-                        $imageTag->removeAttribute("data-lazy-srcset");
-                        $imageTag->removeAttribute("data-lazy-src");
-                        // check if this is magento product image and if it is, set data-src as well
-                        if (strpos($imageTag->getAttribute("class"), "wp-post-image") !== false  && $imageTag->getAttribute("data-large_image_width") != '') {
-                            $imageTag->setAttribute("data-src", $src);
-                        }
-                        $new_img_tag = $doc->saveHTML($imageTag);
-                        $this->logger->log("New img tag:", $new_img_tag);
-                        $content = str_replace($unconverted_img_tag, $new_img_tag, $content);
-                    } else {
-                      $this->logger->log("Skipping due to mismatched host to be replaced.");
-                    }
-                }
+                replace_src_in_imgtag($matches,$content);
             }
 
             // now we will replace srcset in SOURCE tags to data-srcset.
             if (preg_match_all('/<source\s[^>]*srcset=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches)) {
-                foreach ($matches[0] as $unconverted_source_tag) {
-                    $doc = new DOMDocument();
-                    // convert image tag to UTF-8 encoding.
-                    if(function_exists("mb_convert_encoding")) {
-                      $source_tag = mb_convert_encoding($unconverted_source_tag, 'HTML-ENTITIES', "UTF-8");
-                    } else {
-                      $source_tag = $unconverted_source_tag;
-                    }
-                    @$doc->loadHTML($source_tag);
-                    $sourceTag = $doc->getElementsByTagName('source')[0];
-                    $src = $sourceTag->getAttribute('srcset');
-                    $sourceTag->removeAttribute("srcset");
-                    $sourceTag->setAttribute("data-srcset", $src);
-                    $new_source_tag = $doc->saveHTML($sourceTag);
-                    $content = str_replace($unconverted_source_tag, $new_source_tag, $content);
-                }
+                replace_srcset_in_source($matches,$content);
             }
 
             // replace wordpress thumbnails
@@ -759,18 +746,14 @@ class Gumlet
         if (! empty($this->options['quality'])) {
             $params["quality"] = $this->options['quality'];
         }
-
         // if ( ! empty ( $this->options['auto_enhance'] ) ) {
         // 	array_push( $auto, 'enhance' );
         // }
-
         if (! empty($this->options['auto_compress'])) {
             $params["compress"] = "true";
         }
-
         return $params;
     }
-
 
     protected function unparse_url($parsed_url)
     {
@@ -786,5 +769,4 @@ class Gumlet
         return "$scheme$user$pass$host$port$path$query$fragment";
     }
 }
-
 Gumlet::instance();

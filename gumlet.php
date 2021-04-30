@@ -27,7 +27,8 @@ if (GUMLET_DEBUG) {
 
 include('includes/compability.php');
 include('includes/logger.php');
-include('includes/class-gumlet.php');
+//include('includes/class-gumlet.php');
+include('includes/test-gumlet.php');
 include('includes/options-page.php');
 
 
