@@ -269,36 +269,7 @@ class Gumlet
             }
         }
         return $url;
-    }
-
-    /**
-     * Change url for images in srcset
-     *
-     * @param array  $sources
-     * @param array  $size_array
-     * @param string $image_src
-     * @param array  $image_meta
-     * @param int    $attachment_id
-     *
-     * @return array
-     */
-    public function calculate_image_srcset($sources, $size_array, $image_src, $image_meta, $attachment_id)
-    {
-        if (! empty($this->options['cdn_link'])) {
-            $widths = array(30,50,100,200,300,320,400,500,576,600,640,700,720,750,768,800,900,940,1000,1024,1080,1100,1140,1152,1200,1242,1300,1400,1440,1442,1500,1536,1600,1700,1800,1880,1900,1920,2000,2048,2100,2200,2208,2280,2300,2400,2415,2500,2560,2600,2700,2732,2800,2880,2900,3000,3100,3200,3300,3400,3500,3600,3700,3800,3900,4000,4100,4200,4300,4400,4500,4600,4700,4800,4900,5000,5100,5120);
-
-            foreach ($widths as $width) {
-                if ($attachment_id) {
-                    $image_src = wp_get_attachment_url($attachment_id);
-                }
-                $image_src            = remove_query_arg('h', $image_src);
-                $sources[ $width ]['url'] = add_query_arg('w', $width, $image_src);
-                $sources[ $width ]['descriptor'] = 'w';
-                $sources[ $width ]['value'] = $width;
-            }
-        }
-        return $sources;
-    }
+    } 
 
     public function replace_wc_gallery_thumbs($matches) {
       $url = $this->absoluteUrl($matches[1]);
@@ -332,8 +303,6 @@ class Gumlet
         }
     }
 
-    //<amp-img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*[^>]*srcset=([\"\']??)([^\">]*?)\1[^>]*>
-    //replace_images_in_amp_instant_article
     /**
      * Modify image urls in content to use gumlet host.
      *
@@ -554,7 +523,6 @@ class Gumlet
 
             // this replaces background URLs on any tags with data-bg
             preg_match_all('~\bstyle=(\'|")(((?!style).)*?)background(-image)?\s*:(.*?)url\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $content, $matches);
-
             if (!empty($matches)) {
                 foreach ($matches[0] as $match) {
                     preg_match('~\bbackground(-image)?\s*:(.*?)url\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $match, $bg);
@@ -580,7 +548,6 @@ class Gumlet
 
             // we now replace all backgrounds in <style> tags...
             preg_match_all('~\bbackground(-image)?\s*:(.*?)url\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $content, $matches);
-
             if (!empty($matches)) {
                 foreach ($matches[0] as $match) {
                     preg_match('~\bbackground(-image)?\s*:(.*?)url\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $match, $bg);
@@ -603,6 +570,7 @@ class Gumlet
                         $parsed_url = parse_url($bg['image']);
                         $parsed_url['host'] = $gumlet_host;
                         $bg['image'] = $this->unparse_url($parsed_url);
+                        //add query arg,
                         $bg['image'] = add_query_arg($this->get_global_params(), $bg['image']);
                         $final_bg_style = str_replace($original_bg, $bg['image'], $match);
                         $content = str_replace(array($match.';', $match), array( $final_bg_style, $final_bg_style), $content);
@@ -662,7 +630,16 @@ class Gumlet
         $fragment = isset($parsed_url['fragment']) ? '#' . $parsed_url['fragment'] : '';
         return "$scheme$user$pass$host$port$path$query$fragment";
     }
-
+    
+    /**
+     * Replace src tag with datagm-src in IMGtag and removing srcset.
+     *
+     * @param  array $matches
+     * @param  string $content
+     * @param  string $gumlet_host
+     * @param  string $going_to_be_replaced_host
+     * @return string
+     */
     public function replace_src_in_imgtag($matches,$content,$gumlet_host,$going_to_be_replaced_host)
     {
         $this->logger->log("Matched regex:", $matches);
@@ -747,6 +724,13 @@ class Gumlet
         return $content;
     }
 
+    /**
+     * Replace srcset in picture tag.
+     *
+     * @param  array $matches
+     * @param  string $content
+     * @return string
+     */
     public function replace_srcset_in_source($matches,$content) {
         foreach ($matches[0] as $unconverted_source_tag) {
             $doc = new DOMDocument();
@@ -766,5 +750,6 @@ class Gumlet
         }
         return $content;
     }
+
 }
 Gumlet::instance();
