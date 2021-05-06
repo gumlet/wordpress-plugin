@@ -340,11 +340,12 @@ class Gumlet
                     }
 
                     if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host || !parse_url($src, PHP_URL_HOST)) {
-                        $parsed_url = parse_url($src);
-                        $query = 'compress=' . $auto_compress . '&quality=' . $quality;
-                        $parsed_url['host'] = $gumlet_host;
-                        $parsed_url['query'] = $query;
-                        $newsrc = $this->unparse_url($parsed_url);
+                        $newsrc = $this->replace_image_url($src);
+                        // $parsed_url = parse_url($src);
+                        // $query = 'compress=' . $auto_compress . '&quality=' . $quality;
+                        // $parsed_url['host'] = $gumlet_host;
+                        // $parsed_url['query'] = $query;
+                        // $newsrc = $this->unparse_url($parsed_url);
                         $new_img_tag = str_replace($src, $newsrc ,$amp_img_tag);
                         $content = str_replace($amp_img_tag, $new_img_tag, $content);
                     }
@@ -373,11 +374,12 @@ class Gumlet
                         }
 
                         if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host || !parse_url($src, PHP_URL_HOST)) {
-                            $parsed_url = parse_url($src);
-                            $query = 'compress=' . $auto_compress . '&quality=' . $quality;
-                            $parsed_url['host'] = $gumlet_host;
-                            $parsed_url['query'] = $query;
-                            $newsrc = $this->unparse_url($parsed_url);
+                            $newsrc = $this->replace_image_url($src);
+                            // $parsed_url = parse_url($src);
+                            // $query = 'compress=' . $auto_compress . '&quality=' . $quality;
+                            // $parsed_url['host'] = $gumlet_host;
+                            // $parsed_url['query'] = $query;
+                            // $newsrc = $this->unparse_url($parsed_url);
                             $src_sizes_array[0]=$newsrc;
                         }
                         else{
@@ -405,11 +407,12 @@ class Gumlet
                     }
 
                     if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host || !parse_url($src, PHP_URL_HOST)) {
-                        $parsed_url = parse_url($src);
-                        $query = 'compress=' . $auto_compress . '&quality=' . $quality;
-                        $parsed_url['host'] = $gumlet_host;
-                        $parsed_url['query'] = $query;
-                        $newsrc = $this->unparse_url($parsed_url);
+                        $newsrc = $this->replace_image_url($src);
+                        // $parsed_url = parse_url($src);
+                        // $query = 'compress=' . $auto_compress . '&quality=' . $quality;
+                        // $parsed_url['host'] = $gumlet_host;
+                        // $parsed_url['query'] = $query;
+                        // $newsrc = $this->unparse_url($parsed_url);
                         $new_img_tag = str_replace($src, $newsrc ,$img_tag);
                         $content = str_replace($img_tag, $new_img_tag, $content);
                     }
@@ -438,12 +441,12 @@ class Gumlet
                         }
 
                         if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host || !parse_url($src, PHP_URL_HOST)) {
-                            $parsed_url = parse_url($src);
-                            $query = 'compress=' . $auto_compress . '&quality=' . $quality;
-                            $parsed_url['host'] = $gumlet_host;
-                            $parsed_url['query'] = $query;
-                            $newsrc = $this->unparse_url($parsed_url);
-                            //$this->replace_image_url($url)
+                            $newsrc = $this->replace_image_url($src);
+                            // $parsed_url = parse_url($src);
+                            // $query = 'compress=' . $auto_compress . '&quality=' . $quality;
+                            // $parsed_url['host'] = $gumlet_host;
+                            // $parsed_url['query'] = $query;
+                            // $newsrc = $this->unparse_url($parsed_url);
                             $src_sizes_array[0]=$newsrc;
                         }
                         else{
@@ -470,10 +473,6 @@ class Gumlet
      */
     public function replace_images_in_content($content)
     {
-        $myfile = fopen("/Users/adityapatadia/gumlet/wordpress/test.txt", "r") or die("Unable to open file!");
-        $content = fread($myfile,filesize("/Users/adityapatadia/gumlet/wordpress/test.txt"));
-        fclose($myfile); 
-
         $excluded_urls = explode("\n", $this->get_option("exclude_images"));
         $excluded_urls = array_map('trim', $excluded_urls);
         // Added null to apply filters wp_get_attachment_url to improve compatibility with https://en-gb.wordpress.org/plugins/amazon-s3-and-cloudfront/ - does not break wordpress if the plugin isn't present.
