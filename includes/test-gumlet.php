@@ -1,5 +1,4 @@
 <?php
-
 class Gumlet
 {
 
@@ -240,11 +239,12 @@ class Gumlet
     {
         if (! empty($this->options['cdn_link'])) {
             $parsed_url = parse_url($url);
-
             //Check if image is hosted on current site url -OR- the CDN url specified. Using strpos because we're comparing the host to a full CDN url.
             if (
                 isset($parsed_url['host'], $parsed_url['path'])
-                && ($parsed_url['host'] === parse_url(home_url('/'), PHP_URL_HOST) || (isset($this->options['external_cdn_link']) && ! empty($this->options['external_cdn_link']) && strpos($this->options['external_cdn_link'], $parsed_url['host']) !== false))
+                && ($parsed_url['host'] === parse_url(home_url('/'), PHP_URL_HOST) 
+                || (isset($this->options['external_cdn_link']) && ! empty($this->options['external_cdn_link']) 
+                && strpos($this->options['external_cdn_link'], $parsed_url['host']) !== false))
                 && preg_match('/\.(jpg|jpeg|gif|png)$/i', $parsed_url['path'])
             ) 
             {
@@ -253,6 +253,7 @@ class Gumlet
                 foreach ([ 'scheme', 'host', 'port' ] as $url_part){
                     if (isset($cdn[ $url_part ])) {
                         $parsed_url[ $url_part ] = $cdn[ $url_part ];
+                        $this->logger->log("url part",$url_part);
                     } else {
                         unset($parsed_url[ $url_part ]);
                     }
@@ -442,6 +443,7 @@ class Gumlet
                             $parsed_url['host'] = $gumlet_host;
                             $parsed_url['query'] = $query;
                             $newsrc = $this->unparse_url($parsed_url);
+                            //$this->replace_image_url($url)
                             $src_sizes_array[0]=$newsrc;
                         }
                         else{
@@ -471,8 +473,6 @@ class Gumlet
         $myfile = fopen("/Users/adityapatadia/gumlet/wordpress/test.txt", "r") or die("Unable to open file!");
         $content = fread($myfile,filesize("/Users/adityapatadia/gumlet/wordpress/test.txt"));
         fclose($myfile); 
-
-        $this->logger->log("Inside replace_images");
 
         $excluded_urls = explode("\n", $this->get_option("exclude_images"));
         $excluded_urls = array_map('trim', $excluded_urls);
@@ -524,58 +524,13 @@ class Gumlet
             // this replaces background URLs on any tags with data-bg
             preg_match_all('~\bstyle=(\'|")(((?!style).)*?)background(-image)?\s*:(.*?)url\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $content, $matches);
             if (!empty($matches)) {
-                foreach ($matches[0] as $match) {
-                    preg_match('~\bbackground(-image)?\s*:(.*?)url\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $match, $bg);
-                    if (strpos($bg['image'], ';base64,') !== false || strpos($bg['image'], 'data:image/svg+xml') !== false) {
-                        // does not process data URL.
-                        continue;
-                    }
-                    if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($bg[4], PHP_URL_HOST) == $gumlet_host) {
-                        if (in_array($bg['image'], $excluded_urls)) {
-                            // don't process excluded URLs
-                            continue;
-                        }
-                        preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $bg['image'], $size_matches);
-                        if ($size_matches[0] && strlen($size_matches[0][0]) > 4  && $this->get_option("original_images")) {
-                            $bg['image'] = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $bg['image']);
-                        }
-                        $bg_less_match = str_replace($bg[0], '', $match);
-                        $data_match = 'data-bg="'.$bg['image'].'" '.$bg_less_match;
-                        $content = str_replace(array($match.';', $match), array( $data_match, $data_match), $content);
-                    }
-                }
+                $content = $this->replace_src_in_picture($matches,$content);
             }
 
             // we now replace all backgrounds in <style> tags...
             preg_match_all('~\bbackground(-image)?\s*:(.*?)url\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $content, $matches);
             if (!empty($matches)) {
-                foreach ($matches[0] as $match) {
-                    preg_match('~\bbackground(-image)?\s*:(.*?)url\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $match, $bg);
-                    $original_bg = $bg['image'];
-                    if (strpos($bg['image'], ';base64,') !== false || strpos($bg['image'], 'data:image/svg+xml') !== false) {
-                        // does not process data URL.
-                        continue;
-                    }
-
-                    if (in_array($original_bg, $excluded_urls)) {
-                        // don't process excluded URLs
-                        continue;
-                    }
-
-                    if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host) {
-                        preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $bg['image'], $size_matches);
-                        if ($size_matches[0] && strlen($size_matches[0][0]) > 4  && $this->get_option("original_images")) {
-                            $bg['image'] = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $bg['image']);
-                        }
-                        $parsed_url = parse_url($bg['image']);
-                        $parsed_url['host'] = $gumlet_host;
-                        $bg['image'] = $this->unparse_url($parsed_url);
-                        //add query arg,
-                        $bg['image'] = add_query_arg($this->get_global_params(), $bg['image']);
-                        $final_bg_style = str_replace($original_bg, $bg['image'], $match);
-                        $content = str_replace(array($match.';', $match), array( $final_bg_style, $final_bg_style), $content);
-                    }
-                }
+                $content=$this->replace_src_in_css($matches,$content);
             }
         }
         return $content;
@@ -647,11 +602,12 @@ class Gumlet
             $this->logger->log("Processing img:", $unconverted_img_tag);
             $doc = new DOMDocument();
             // convert image tag to UTF-8 encoding.
-            if(function_exists("mb_convert_encoding")) {
-                $img_tag = mb_convert_encoding($unconverted_img_tag, 'HTML-ENTITIES', "UTF-8");
-            } else {
-                $img_tag = $unconverted_img_tag;
-            }
+            // if(function_exists("mb_convert_encoding")) {
+            //     $img_tag = mb_convert_encoding($unconverted_img_tag, 'HTML-ENTITIES', "UTF-8");
+            // } else {
+            //     $img_tag = $unconverted_img_tag;
+            // }
+            $img_tag = $this-> convert_to_utf($unconverted_img_tag);
 
             @$doc->loadHTML($img_tag);
             $imageTag = $doc->getElementsByTagName('img')[0];
@@ -732,14 +688,16 @@ class Gumlet
      * @return string
      */
     public function replace_srcset_in_source($matches,$content) {
-        foreach ($matches[0] as $unconverted_source_tag) {
+        foreach ($matches[0] as $unconverted_img_tag) {
             $doc = new DOMDocument();
             // convert image tag to UTF-8 encoding.
-            if(function_exists("mb_convert_encoding")) {
-              $source_tag = mb_convert_encoding($unconverted_source_tag, 'HTML-ENTITIES', "UTF-8");
-            } else {
-              $source_tag = $unconverted_source_tag;
-            }
+            // if(function_exists("mb_convert_encoding")) {
+            //   $source_tag = mb_convert_encoding($unconverted_source_tag, 'HTML-ENTITIES', "UTF-8");
+            // } else {
+            //   $source_tag = $unconverted_source_tag;
+            // }
+            $source_tag = $this-> convert_to_utf($unconverted_img_tag);
+            //write function to remove srcset for img and this function.
             @$doc->loadHTML($source_tag);
             $sourceTag = $doc->getElementsByTagName('source')[0];
             $src = $sourceTag->getAttribute('srcset');
@@ -751,5 +709,90 @@ class Gumlet
         return $content;
     }
 
+    /**
+     * Replace background src in picture tag.
+     *
+     * @param  array $matches
+     * @param  string $content
+     * @return string
+     */
+    public function replace_src_in_picture($matches,$content) {
+        foreach ($matches[0] as $match) {
+            preg_match('~\bbackground(-image)?\s*:(.*?)url\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $match, $bg);
+            if (strpos($bg['image'], ';base64,') !== false || strpos($bg['image'], 'data:image/svg+xml') !== false) {
+                // does not process data URL.
+                continue;
+            }
+            if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($bg[4], PHP_URL_HOST) == $gumlet_host) {
+                if (in_array($bg['image'], $excluded_urls)) {
+                    // don't process excluded URLs
+                    continue;
+                }
+                preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $bg['image'], $size_matches);
+                if ($size_matches[0] && strlen($size_matches[0][0]) > 4  && $this->get_option("original_images")) {
+                    $bg['image'] = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $bg['image']);
+                }
+                $bg_less_match = str_replace($bg[0], '', $match);
+                $data_match = 'data-bg="'.$bg['image'].'" '.$bg_less_match;
+                $content = str_replace(array($match.';', $match), array( $data_match, $data_match), $content);
+            }
+        }
+        return $content;
+    }
+
+    /**
+     * Replace background src in css.
+     *
+     * @param  array $matches
+     * @param  string $content
+     * @return string
+     */
+    public function replace_src_in_css($matches,$content) {
+        foreach ($matches[0] as $match) {
+            preg_match('~\bbackground(-image)?\s*:(.*?)url\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $match, $bg);
+            $original_bg = $bg['image'];
+            if (strpos($bg['image'], ';base64,') !== false || strpos($bg['image'], 'data:image/svg+xml') !== false) {
+                // does not process data URL.
+                continue;
+            }
+
+            if (in_array($original_bg, $excluded_urls)) {
+                // don't process excluded URLs
+                continue;
+            }
+
+            if (parse_url($bg[4], PHP_URL_HOST) == $going_to_be_replaced_host) {
+                preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $bg['image'], $size_matches);
+                if ($size_matches[0] && strlen($size_matches[0][0]) > 4  && $this->get_option("original_images")) {
+                    $bg['image'] = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $bg['image']);
+                }
+                //use replace image url function
+                $parsed_url = parse_url($bg['image']);
+                $parsed_url['host'] = $gumlet_host;
+                $bg['image'] = $this->unparse_url($parsed_url);
+                //add query arg,
+                $bg['image'] = add_query_arg($this->get_global_params(), $bg['image']);
+                $final_bg_style = str_replace($original_bg, $bg['image'], $match);
+                $content = str_replace(array($match.';', $match), array( $final_bg_style, $final_bg_style), $content);
+            }
+        }
+        return $content;
+    }
+
+    /**
+     * Convert img tag to UTF-8 enconding.
+     *
+     * @param  string $unconverted_img_tag
+     * @return string
+     */
+    public function convert_to_utf($unconverted_img_tag){
+        if(function_exists("mb_convert_encoding")) {
+            $img_tag = mb_convert_encoding($unconverted_img_tag, 'HTML-ENTITIES', "UTF-8");
+            return $img_tag;
+        } else {
+            return $unconverted_img_tag;
+        }
+    }
+        
 }
 Gumlet::instance();
