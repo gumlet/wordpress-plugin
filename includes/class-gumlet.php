@@ -201,15 +201,10 @@ class Gumlet
             if( (function_exists('amp_is_request') && amp_is_request()) || (isset($_GET['ia_markup']) && $_GET[ 'ia_markup' ]))
             {
                 ob_start([$this, 'replace_images_in_amp_instant_article']);
-            }
-            if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')
+            } else if(isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')
             {    
                 ob_start([$this, 'convert_json']);
-            }
-            // if(isset($_SERVER['HTTP_X_REQUESTED_WITH']) && !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')
-            // {
-            // }
-            else{
+            } else{
                 ob_start([$this, 'replace_images_in_content']);
             }
         }
