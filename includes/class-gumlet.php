@@ -202,7 +202,8 @@ class Gumlet
             {
                 ob_start([$this, 'replace_images_in_amp_instant_article']);
             } else if(isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')
-            {    
+            {   
+                $this->logger->log("inside ajax req.",$_SERVER['HTTP_X_REQUESTED_WITH']);
                 ob_start([$this, 'convert_json']);
             } else{
                 ob_start([$this, 'replace_images_in_content']);
@@ -219,7 +220,9 @@ class Gumlet
      */
     public function convert_json($content){
         $obj=json_decode($content);
+        $this->logger->log("json object.",$obj);
         $obj->html=$this->replace_images_in_content($obj->html);
+        $this->logger->log("converted.",$obj->html);
         return json_encode($obj);
     }
 
