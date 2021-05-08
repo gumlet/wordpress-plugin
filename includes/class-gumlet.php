@@ -134,6 +134,12 @@ class Gumlet
         // if (function_exists('amp_is_request') && amp_is_request()) {
         //     return false;
         // }
+        
+        // this check is for elementor gallery ajax requests which has action type of get_listings
+        if(isset($_GET['action']) && $_GET['action'] == 'get_listings')
+        {
+            return true;
+        }
 
         if (isset($_SERVER['HTTP_REFERER'])) {
             $admin = parse_url(admin_url());
@@ -196,10 +202,30 @@ class Gumlet
             {
                 ob_start([$this, 'replace_images_in_amp_instant_article']);
             }
+            if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')
+            {    
+                ob_start([$this, 'convert_json']);
+            }
+            // if(isset($_SERVER['HTTP_X_REQUESTED_WITH']) && !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')
+            // {
+            // }
             else{
                 ob_start([$this, 'replace_images_in_content']);
             }
         }
+    }
+
+    /**
+     * converting json .
+     *
+     * @param $content
+     *
+     * @return 
+     */
+    public function convert_json($content){
+        $obj=json_decode($content);
+        $obj->html=$this->replace_images_in_content($obj->html);
+        return json_encode($obj);
     }
 
     /**
