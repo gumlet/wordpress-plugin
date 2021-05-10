@@ -226,9 +226,8 @@ class Gumlet
             $this->logger->log("converted.",$obj->html);
             return json_encode($obj);
         } else {
-            return $content
+            return $content;
         }
-        
     }
 
     /**
