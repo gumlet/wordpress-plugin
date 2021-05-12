@@ -481,12 +481,6 @@ class Gumlet
         foreach ($matches[0] as $unconverted_img_tag) {
             $this->logger->log("Processing img:", $unconverted_img_tag);
             $doc = new DOMDocument();
-            // convert image tag to UTF-8 encoding.
-            // if(function_exists("mb_convert_encoding")) {
-            //     $img_tag = mb_convert_encoding($unconverted_img_tag, 'HTML-ENTITIES', "UTF-8");
-            // } else {
-            //     $img_tag = $unconverted_img_tag;
-            // }
             $img_tag = $this-> convert_to_utf($unconverted_img_tag);
 
             @$doc->loadHTML($img_tag);
@@ -570,12 +564,6 @@ class Gumlet
     public function replace_srcset_in_source($matches,$content) {
         foreach ($matches[0] as $unconverted_img_tag) {
             $doc = new DOMDocument();
-            // convert image tag to UTF-8 encoding.
-            // if(function_exists("mb_convert_encoding")) {
-            //   $source_tag = mb_convert_encoding($unconverted_source_tag, 'HTML-ENTITIES', "UTF-8");
-            // } else {
-            //   $source_tag = $unconverted_source_tag;
-            // }
             $source_tag = $this-> convert_to_utf($unconverted_img_tag);
             //write function to remove srcset for img and this function.
             @$doc->loadHTML($source_tag);
@@ -584,7 +572,7 @@ class Gumlet
             $sourceTag->removeAttribute("srcset");
             $sourceTag->setAttribute("data-srcset", $src);
             $new_source_tag = $doc->saveHTML($sourceTag);
-            $content = str_replace($unconverted_source_tag, $new_source_tag, $content);
+            $content = str_replace($unconverted_img_tag, $new_source_tag, $content);
         }
         return $content;
     }
