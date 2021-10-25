@@ -158,7 +158,7 @@ class Gumlet
                 $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
             }
 
-            wp_register_script('gumlet-script-async', 'https://cdn.gumlet.com/gumlet.js/2.0/gumlet.min.js', array(), '2.0.2', false);
+            wp_register_script('gumlet-script-async', 'https://cdn.gumlet.com/gumlet.js/2.1/gumlet.min.js', array(), '2.1.0', false);
             wp_localize_script('gumlet-script-async', 'gumlet_wp_config', array(
               'gumlet_host' => parse_url($this->options['cdn_link'], PHP_URL_HOST),
               'current_host' => isset($external_cdn_host) ? $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST),
