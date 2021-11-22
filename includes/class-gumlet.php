@@ -93,7 +93,7 @@ class Gumlet
 
         //add_action('amp_post_template_data', [$this, 'replace_images_in_amp_instant_article'], 1);
 
-        add_action('wp', [$this, 'init_ob'], 1);
+        add_action('wp_loaded', [$this, 'init_ob'], 1);
     }
 
     public function add_asyncdefer_attribute($tag, $handle)
