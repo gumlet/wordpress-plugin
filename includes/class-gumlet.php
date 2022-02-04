@@ -324,7 +324,7 @@ class Gumlet
     public function convert_json($content){
         $obj=json_decode($content);
         $this->logger->log("json object.",$obj);
-        if($obj) {   
+        if($obj && property_exists($obj, 'html')) {   
             $obj->html=$this->replace_images_in_content($obj->html);
             $this->logger->log("converted.",$obj->html);
             return json_encode($obj);
