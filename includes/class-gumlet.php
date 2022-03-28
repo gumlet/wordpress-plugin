@@ -158,12 +158,13 @@ class Gumlet
                 $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
             }
 
-            wp_register_script('gumlet-script-async', 'https://cdn.gumlet.com/gumlet.js/2.1/gumlet.min.js', array(), '2.1.0', false);
+            wp_register_script('gumlet-script-async', 'https://cdn.jsdelivr.net/npm/gumlet.js@2.1.3/dist/gumlet.min.js');
             wp_localize_script('gumlet-script-async', 'gumlet_wp_config', array(
               'gumlet_host' => parse_url($this->options['cdn_link'], PHP_URL_HOST),
               'current_host' => isset($external_cdn_host) ? $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST),
               'lazy_load' => (!empty($this->options['lazy_load'])) ? 1 : 0,
               'width_from_img' => get_option('gumlet_width_from_img') ? 1 : 0,
+              'width_from_flex' => get_option('gumlet_width_from_flex') ? 1 : 0,
               'auto_compress' => (!empty($this->options['auto_compress'])) ? 1 : 0,
               "auto_webp" => (!empty($this->options['server_webp'])) ? 1 : 0,
               'quality' => (!empty($this->options['quality'])) ? $this->options['quality'] : 80

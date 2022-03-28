@@ -194,6 +194,18 @@ class Gumlet_Options_Page
                         </tr>
                         <tr>
                             <th>
+                                <label class="description" for="gumlet_width_from_flex">
+                                    <?php esc_html_e('Use Flex Width', 'gumlet'); ?>
+                                </label>
+                            </th>
+                            <td>
+                                <input id="gumlet_width_from_flex" type="checkbox" name="gumlet_width_from_flex" value="1"
+                                    <?php checked(get_option('gumlet_width_from_flex')) ?> />
+                                <p style="color: #666">If this is enabled, plugin will use width from Flex CSS propery rather than calculating actual width.</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
                                 <label class="description" for="gumlet_settings[exclude_images]">
                                     <?php esc_html_e('Exclude Image URLs', 'gumlet'); ?>
                                 </label>
