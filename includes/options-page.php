@@ -206,6 +206,17 @@ class Gumlet_Options_Page
                         </tr>
                         <tr>
                             <th>
+                                <label class="description" for="gumlet_min_width">
+                                    <?php esc_html_e('Minimum Width', 'gumlet'); ?>
+                                </label>
+                            </th>
+                            <td>
+                                <input id="gumlet_min_width" type="number" name="gumlet_min_width" min="0" max="5000" value=<?php get_option('gumlet_min_width') ?> />
+                                <p style="color: #666">Deinfes minimum width to serve for images.</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
                                 <label class="description" for="gumlet_settings[exclude_images]">
                                     <?php esc_html_e('Exclude Image URLs', 'gumlet'); ?>
                                 </label>
@@ -282,7 +293,7 @@ class Gumlet_Options_Page
     {
         register_setting('gumlet_settings_group', 'gumlet_settings');
         register_setting('gumlet_settings_group', 'gumlet_width_from_img', ["type"=> 'boolean', "default"=>true]);
-        register_setting('gumlet_settings_group', 'gumlet_width_from_flex', ["type"=> 'boolean', "default"=>false]);
+        register_setting('gumlet_settings_group', 'gumlet_min_width', ["type"=> 'intrger']);
     }
 
     /**
