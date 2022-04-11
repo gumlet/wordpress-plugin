@@ -212,7 +212,7 @@ class Gumlet_Options_Page
                             </th>
                             <td>
                                 <input id="gumlet_min_width" type="number" name="gumlet_min_width" min="0" max="5000" value="<?php echo get_option('gumlet_min_width'); ?>" />
-                                <p style="color: #666">Deinfes minimum width to serve for images.</p>
+                                <p style="color: #666">If set, this will be minimum pixel width for image serving.</p>
                             </td>
                         </tr>
                         <tr>

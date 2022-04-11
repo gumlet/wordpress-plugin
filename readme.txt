@@ -7,7 +7,7 @@ Author URI: https://www.gumlet.com
 Requires at least: 3.3
 Requires PHP: 5.6.3
 Tested up to: 5.9.0
-Stable tag: 1.2.12
+Stable tag: 1.2.13
 License: BSD-2
 License URI: http://opensource.org/licenses/BSD-2-Clause
 
