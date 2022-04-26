@@ -529,6 +529,11 @@ class Gumlet
                 $src = $imageTag->getAttribute('data-large_image');
             }
 
+            if(substr( $src, 0, 3) === "{%=") {
+                $this->logger->log("Skipping due to template {%= url");
+                continue;
+            }
+
             if (in_array($src, $excluded_urls)) {
                 // don't process excluded URLs
                 $imageTag->setAttribute("data-gumlet", 'false');
