@@ -66,7 +66,7 @@ class Gumlet_Options_Page
         <p><strong>Important!</strong> Gumlet <strong>does not</strong> work well with other lazy-load plugins. We
             recommend you <strong>disable</strong> all other lazy-load plugins and lazy-load settings in themes.</p>
         <p><strong>Need help getting started?</strong> It's easy! Check out our
-            <a href="https://docs.gumlet.com/platform-guides/wordpress-integration" target="_blank">instructions.</a>
+            <a href="https://docs.gumlet.com/docs/image-integration-wordpress" target="_blank">instructions.</a>
         </p>
     </div>
 
@@ -87,7 +87,7 @@ class Gumlet_Options_Page
                             </th>
                             <td>
                                 <input id="gumlet_settings[cdn_link]" type="url" name="gumlet_settings[cdn_link]"
-                                    placeholder="https://yourcompany.gumlet.com"
+                                    placeholder="https://yourcompany.gumlet.io"
                                     value="<?php echo $this->get_option('cdn_link'); ?>" required="required"
                                     class="regular-text code" />
                             </td>

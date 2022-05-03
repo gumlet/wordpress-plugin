@@ -7,7 +7,7 @@ Author URI: https://www.gumlet.com
 Requires at least: 3.3
 Requires PHP: 5.6.3
 Tested up to: 5.9.0
-Stable tag: 1.2.14
+Stable tag: 1.2.15
 License: BSD-2
 License URI: http://opensource.org/licenses/BSD-2-Clause
 
@@ -50,7 +50,7 @@ Even if you are using another image optimization plugin, chances are they are no
 
 = ACCELERATE YOUR JS AND CSS FILES =
 
-Gumlet CDN can be integrated with popular plugins like WP Rocket to deliver your non-image files via CDN too. Our World class CDN would make sure your website loads as fast as possible > [Read more](https://docs.gumlet.com/platform-guides/wordpress-integration#bonus-serve-css-and-js-files-via-gumlet-cdn).
+Gumlet CDN can be integrated with popular plugins like WP Rocket to deliver your non-image files via CDN too. Our World class CDN would make sure your website loads as fast as possible > [Read more](https://docs.gumlet.com/docs/image-integration-wordpress#bonus-serve-css-and-js-files-via-gumlet-cdn).
 
 = WHAT OUR USERS HAVE TO SAY =
 
@@ -85,7 +85,7 @@ More details on our [website](https://www.gumlet.com/pricing)
 * **Delivery Analytics** -  Keep a tab on response times, usage details in real time
 * **Alerts and reports** - Get customized alerts and reports on image related data.
 * **No lock in!** Disable the plugin and your images will be served as they were before installation.
-* **Powerful Image API** - full and free access [Documentation](https://docs.gumlet.com/developers/api-reference)
+* **Powerful Image API** - full and free access [Documentation](https://docs.gumlet.com/reference/image-transform-size
 * **Progressive JPEG** – Display JPEG images more quickly with progressive JPEG encoding.
 * **Keep same storage** - Optimize images stored in external sources like Amazon S3
 * **Image Metadata** - Keep (for photographers) or Remove (for optimisation), you choose!
@@ -93,7 +93,7 @@ More details on our [website](https://www.gumlet.com/pricing)
 
 = 15 MINUTE INSTALLATION GUIDE =
 
-Yes, it actually takes only 15 minutes to set up Gumlet for your entire website. Check out our super [simple installation guide](https://docs.gumlet.com/platform-guides/wordpress-integration)
+Yes, it actually takes only 15 minutes to set up Gumlet for your entire website. Check out our super [simple installation guide](https://docs.gumlet.com/docs/image-integration-wordpress)
 
 Don’t wait now, just give it a try! There is nothing to lose 😀
 
@@ -131,11 +131,14 @@ A: Yes! EXIF data stores camera settings, focal length, date, time and location 
 
 == Installation ==
 
-Please follow our official installation guide: [https://docs.gumlet.com/platform-guides/wordpress-integration](https://docs.gumlet.com/platform-guides/wordpress-integration)
+Please follow our official installation guide: [https://docs.gumlet.com/docs/image-integration-wordpress](https://docs.gumlet.com/docs/image-integration-wordpress)
 
 If you need any help, you can reach out to us at support@gumlet.com.
 
 == Changelog ==
+
+= 1.2.15 =
+* Documentation link update.
 
 = 1.2.14 =
 * Bug fix for template URLs
