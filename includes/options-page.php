@@ -293,6 +293,7 @@ class Gumlet_Options_Page
     {
         register_setting('gumlet_settings_group', 'gumlet_settings');
         register_setting('gumlet_settings_group', 'gumlet_width_from_img', ["type"=> 'boolean', "default"=>true]);
+        register_setting('gumlet_settings_group', 'gumlet_width_from_flex', ["type"=> 'boolean', "default"=>false]);
         register_setting('gumlet_settings_group', 'gumlet_min_width', ["type"=> 'intrger']);
     }
 
