@@ -93,7 +93,7 @@ class Gumlet
 
         //add_action('amp_post_template_data', [$this, 'replace_images_in_amp_instant_article'], 1);
 
-        add_action('wp_loaded', [$this, 'init_ob'], 1);
+        add_action('wp', [$this, 'init_ob'], 1);
     }
 
     public function add_asyncdefer_attribute($tag, $handle)
@@ -178,7 +178,11 @@ class Gumlet
     public function init_ob()
     {
         //test this,cdn_link checking in init_ob
-        $excluded_post_types = explode("\n", $this->get_option("exclude_post_types"));
+        global $wp_query;
+        $excluded_explode = explode("\n", $this->get_option("exclude_post_types"));
+        foreach ($excluded_explode as $value) {
+            $excluded_post_types[] = trim($value);
+        }
 
         if (!empty($this->options['cdn_link']) && $this->isWelcome()) {
             if( (function_exists('amp_is_request') && amp_is_request()) || (isset($_GET['ia_markup']) && $_GET[ 'ia_markup' ]))
@@ -190,7 +194,7 @@ class Gumlet
                 $this->logger->log("inside ajax req.",$_SERVER['HTTP_X_REQUESTED_WITH']);
                 ob_start([$this, 'convert_json']);
             } 
-            else if(in_array(get_post_type(), $excluded_post_types)){
+            else if(in_array(get_post_type($wp_query->post), $excluded_post_types)){
                 // excluded post types will not have gumlet-js enabled on them.
                 ob_start([$this, 'replace_images_in_amp_instant_article']);
             } else{
@@ -484,7 +488,7 @@ class Gumlet
             $params["quality"] = $this->options['quality'];
         }
         // if ( ! empty ( $this->options['auto_enhance'] ) ) {
-        // 	array_push( $auto, 'enhance' );
+        //  array_push( $auto, 'enhance' );
         // }
         if (! empty($this->options['auto_compress'])) {
             $params["compress"] = "true";
