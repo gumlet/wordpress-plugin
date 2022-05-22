@@ -229,6 +229,19 @@ class Gumlet_Options_Page
                                     enter one URL per line.</p>
                             </td>
                         </tr>
+                        <tr>
+                            <th>
+                                <label class="description" for="gumlet_settings[exclude_post_types]">
+                                    <?php esc_html_e('Exclude Post Types', 'gumlet'); ?>
+                                </label>
+                            </th>
+                            <td>
+                                <textarea id="gumlet_settings[exclude_post_types]" style="width: 500px; height: 100px"
+                                    placeholder="Enter each post type in new line."
+                                    name="gumlet_settings[exclude_post_types]"><?php print($this->get_option('exclude_post_types')) ?></textarea>
+                                <p style="color: #666">Enter post types here to exclude those posts from being processed with Gumlet.</p>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>

@@ -7,7 +7,7 @@ Author URI: https://www.gumlet.com
 Requires at least: 3.3
 Requires PHP: 5.6.3
 Tested up to: 5.9.0
-Stable tag: 1.2.17
+Stable tag: 1.3.0
 License: BSD-2
 License URI: http://opensource.org/licenses/BSD-2-Clause
 
@@ -137,57 +137,5 @@ If you need any help, you can reach out to us at support@gumlet.com.
 
 == Changelog ==
 
-= 1.2.17 =
-* Bug fix in width-from-flex setting.
-
-= 1.2.16 =
-* Build process updated.
-
-= 1.2.15 =
-* Documentation link update.
-
-= 1.2.14 =
-* Bug fix for template URLs
-
-= 1.2.12 =
-* Bug fix in min-width
-
-= 1.2.11 =
-* Min width option added
-
-= 1.2.10 =
-* Bug fix in gumlet.js.
-
-= 1.2.9 =
-* Bug fix.
-
-= 1.2.8 =
-* Option added to take width from Flex
-
-= 1.2.7 =
-* Fix for WordPress 5.9.0
-
-= 1.2.6 =
-* Fix issue for some websites.
-
-= 1.2.5 =
-* Gumlet.js upgrade
-
-= 1.2.4 =
-* Gumlet.js upgrade
-
-= 1.2.3 =
-* Code revamped
-* Now serving Elementor gallery ajax requests.
-* Bug fix.
-
-= 1.2.2 =
-* Now serving AMP requests through GUMLET.
-
-= 1.2.1 =
-* Settings panel revamped.
-* New option given to detect client-side WebP support.
-
-= 1.2.0 =
-* Settings panel revamped.
-* New option given to detect client-side WebP support.
+= 1.3.0 =
+* Added ability to exclude by post types.

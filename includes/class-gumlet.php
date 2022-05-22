@@ -121,6 +121,7 @@ class Gumlet
         {
             return true;
         }
+
         if (isset($_SERVER['HTTP_REFERER'])) {
             $admin = parse_url(admin_url());
             $referrer = parse_url($_SERVER['HTTP_REFERER']);
@@ -177,6 +178,8 @@ class Gumlet
     public function init_ob()
     {
         //test this,cdn_link checking in init_ob
+        $excluded_post_types = explode("\n", $this->get_option("exclude_post_types"));
+
         if (!empty($this->options['cdn_link']) && $this->isWelcome()) {
             if( (function_exists('amp_is_request') && amp_is_request()) || (isset($_GET['ia_markup']) && $_GET[ 'ia_markup' ]))
             {
@@ -187,7 +190,10 @@ class Gumlet
                 $this->logger->log("inside ajax req.",$_SERVER['HTTP_X_REQUESTED_WITH']);
                 ob_start([$this, 'convert_json']);
             } 
-            else{
+            else if(in_array(get_post_type(), $excluded_post_types)){
+                // excluded post types will not have gumlet-js enabled on them.
+                ob_start([$this, 'replace_images_in_amp_instant_article']);
+            } else{
                 ob_start([$this, 'replace_images_in_content']);
             }
         }
