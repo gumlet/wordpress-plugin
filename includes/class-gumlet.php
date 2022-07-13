@@ -447,14 +447,14 @@ class Gumlet
         // }
 
         // this replaces background URLs on any tags with data-bg
-        preg_match_all('~\bstyle=(\'|")(((?!style).)*?)background(-image)?\s*:(.*?)url\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $content, $matches);
-        if (!empty($matches)) {
+        $num_matches = preg_match_all('~\bstyle=(\'|")(((?!style).)*?)background(-image)?\s*:(.*?)url\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $content, $matches);
+        if ($num_matches) {
             $content = $this->replace_src_in_style($matches,$content,$going_to_be_replaced_host,$gumlet_host,$excluded_urls);
         }
 
         // we now replace all backgrounds in <style> tags...
-        preg_match_all('~\bbackground(-image)?\s*:(.*?)url\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $content, $matches);
-        if (!empty($matches)) {
+        $num_matches = preg_match_all('~\bbackground(-image)?\s*:(.*?)url\(\s*(\'|")?(?<image>.*?)\3?\s*\);?~i', $content, $matches);
+        if ($num_matches) {
             $content = $this->replace_src_in_css($matches,$content,$going_to_be_replaced_host,$gumlet_host,$excluded_urls);
         }
         return $content;
