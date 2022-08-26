@@ -3,6 +3,7 @@
 Contributors: adityapatadia
 Tags: images, image management, image manipulation, image optimization, image compression, lazy load images, gumlet, picture, pictures, thumbnails, cdn, content delivery network, jpeg, png, webp
 Author: Gumlet
+Text Domain: gumlet
 Author URI: https://www.gumlet.com
 Requires at least: 3.3
 Requires PHP: 5.6.3
