@@ -8,7 +8,7 @@ Author URI: https://www.gumlet.com
 Requires at least: 3.3
 Requires PHP: 5.6.3
 Tested up to: 5.9.0
-Stable tag: 1.3.5
+Stable tag: 1.3.6
 License: BSD-2
 License URI: http://opensource.org/licenses/BSD-2-Clause
 
@@ -137,6 +137,9 @@ Please follow our official installation guide: [https://docs.gumlet.com/docs/ima
 If you need any help, you can reach out to us at support@gumlet.com.
 
 == Changelog ==
+
+= 1.3.6 =
+* Translation support added
 
 = 1.3.5 =
 * Doc links updated
