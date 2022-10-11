@@ -558,6 +558,12 @@ class Gumlet
                 continue;
             }
 
+            if(strpos($imageTag->getAttribute('class'), "hidden") !== false){
+                // if image class has "hidden" class, disable lazy load for those images.
+                // this is useful for sliders.
+                $imageTag->setAttribute("data-gmlazy", 'false');
+            }
+
             if (in_array($src, $excluded_urls)) {
                 // don't process excluded URLs
                 $imageTag->setAttribute("data-gumlet", 'false');
