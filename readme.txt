@@ -68,7 +68,9 @@ Gumlet image optimization is used by more than 6000 sites across the world. From
 
 = PRICING PLANS =
 Like the plugin itself, the pricing plans are super simple and scale friendly!
-We only charge for CDN bandwidth consumed for image delivery. There are no charges or limits on the number of images original images, or optimisations performed. You get **1 GB** of CDN bandwidth FREE to try out the plugin.
+We only charge for CDN bandwidth consumed for image delivery. There are no charges or limits on the number of images original images, or optimisations performed. You get **30 GB** CDN bandwidth monthly for FREE to try out the plugin.
+
+*Note*: If you are on a Gumlet Image plan, the plugin usage will be accounted in the same plan itself. You do not need a separate plan for using this plugin. 
 
 More details on our [website](https://www.gumlet.com/pricing)
 
