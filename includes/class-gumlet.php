@@ -564,7 +564,7 @@ class Gumlet
                 $imageTag->setAttribute("data-gmlazy", 'false');
             }
 
-            if (in_array($src, $excluded_urls)) {
+            if (in_array($src, $excluded_urls) || strpos($imageTag->getAttribute('fetchpriority'), "high") !== false) {
                 // don't process excluded URLs
                 $imageTag->setAttribute("data-gumlet", 'false');
                 $new_img_tag = $doc->saveHTML($imageTag);
