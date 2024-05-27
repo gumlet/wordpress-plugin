@@ -93,6 +93,7 @@ More details on our [website](https://www.gumlet.com/pricing)
 * **Keep same storage** - Optimize images stored in external sources like Amazon S3
 * **Image Metadata** - Keep (for photographers) or Remove (for optimisation), you choose!
 * **GDPR compliant** - We do not record or store any personal information about your users.
+* **Video Embed** - Added support for Gumlet Video Embeds.
 
 = 15 MINUTE INSTALLATION GUIDE =
 
