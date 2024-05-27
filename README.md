@@ -16,6 +16,7 @@ Features
 * Automatically compress images with [Auto Compress](https://docs.gumlet.com/reference/image-formats#compress) option.
 * Use arbitrary [Gumlet API params](https://docs.gumlet.com/reference/image-formats) when editing `<img>` tags in "Text mode" and they will pass through.
 * No lock in! Disable the plugin and your images will be served as they were before installation.
+* Added support for Gumlet Video Embed.
 
 Getting Started
 ---------------
