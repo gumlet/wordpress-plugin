@@ -46,6 +46,7 @@ function gumlet_plugin_admin_action_links($links, $file)
 add_filter('plugin_action_links', 'gumlet_plugin_admin_action_links', 10, 2);
 
 register_activation_hook(__FILE__, 'gumlet_plugin_activate');
+
 function gumlet_plugin_activate()
 {
     // plugin activation code here...
@@ -53,3 +54,15 @@ function gumlet_plugin_activate()
         update_option('gumlet_settings', ["lazy_load" => 1, "original_images" => 1, "auto_compress"=> 1, "server_webp"=> 0]);
     }
 }
+
+// Register oEmbed provider
+function gumlet_oembed_provider() {
+        if ( ! function_exists( 'wp_oembed_add_provider' ) ) {
+
+                require_once ABSPATH . WPINC . '/embed.php';
+        }
+        wp_oembed_add_provider( '#https?://play\.gumlet\.io/embed/.*#i', 'https://api.gumlet.com/v1/oembed', true );
+        wp_oembed_add_provider( '#https?://gumlet\.tv/watch/.*#i', 'https://api.gumlet.com/v1/oembed', true );
+}
+
+add_action( 'init', 'gumlet_oembed_provider' );
