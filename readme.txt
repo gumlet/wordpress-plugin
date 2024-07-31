@@ -7,7 +7,7 @@ Text Domain: gumlet
 Author URI: https://www.gumlet.com
 Requires at least: 3.3
 Requires PHP: 5.6.3
-Tested up to: 6.3.1
+Tested up to: 6.3.2
 Stable tag: 1.3.12
 License: BSD-2
 License URI: http://opensource.org/licenses/BSD-2-Clause
