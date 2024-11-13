@@ -56,7 +56,7 @@ function gumlet_plugin_activate()
 }
 
 // Register oEmbed provider
-function gumlet_oembed_provider() {
+function gumlet_oembed_provider_img() {
         if ( ! function_exists( 'wp_oembed_add_provider' ) ) {
 
                 require_once ABSPATH . WPINC . '/embed.php';
@@ -65,4 +65,4 @@ function gumlet_oembed_provider() {
         wp_oembed_add_provider( '#https?://gumlet\.tv/watch/.*#i', 'https://api.gumlet.com/v1/oembed', true );
 }
 
-add_action( 'init', 'gumlet_oembed_provider' );
+add_action( 'init', 'gumlet_oembed_provider_img' );
