@@ -7,8 +7,8 @@ Text Domain: gumlet
 Author URI: https://www.gumlet.com
 Requires at least: 3.3
 Requires PHP: 5.6.3
-Tested up to: 6.6.1
-Stable tag: 1.3.15
+Tested up to: 6.6.2
+Stable tag: 1.3.16
 License: BSD-2
 License URI: http://opensource.org/licenses/BSD-2-Clause
 
@@ -140,6 +140,15 @@ Please follow our official installation guide: [https://docs.gumlet.com/docs/ima
 If you need any help, you can reach out to us at support@gumlet.com.
 
 == Changelog ==
+
+= 1.3.16 =
+* Update changelog
+
+= 1.3.15 =
+* Update version
+
+= 1.3.14 =
+* Resolve conflict
 
 = 1.3.13 =
 * Support newer wordpress.
