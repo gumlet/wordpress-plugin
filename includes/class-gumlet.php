@@ -17,6 +17,13 @@ class Gumlet
     protected $options = [];
 
     /**
+     * Logger instance
+     *
+     * @var GumletLogger
+     */
+    protected $logger;
+
+    /**
      * Buffer is started by plugin and should be ended on shutdown.
      *
      * @var bool
@@ -534,91 +541,99 @@ class Gumlet
      * @param  string $excluded_urls
      * @return string
      */
-    public function replace_src_in_imgtag($matches,$content,$gumlet_host,$going_to_be_replaced_host,$excluded_urls)
+    public function replace_src_in_imgtag($matches, $content, $gumlet_host, $going_to_be_replaced_host, $excluded_urls)
     {
         $this->logger->log("Matched regex:", $matches);
         foreach ($matches[0] as $unconverted_img_tag) {
             $this->logger->log("Processing img:", $unconverted_img_tag);
-            $doc = new DOMDocument();
-            $img_tag = $this-> convert_to_utf($unconverted_img_tag);
-
-            @$doc->loadHTML($img_tag);
-            $imageTag = $doc->getElementsByTagName('img')[0];
-            $src = $imageTag->getAttribute('src');
-            if (!$src) {
-                $src = $imageTag->getAttribute('data-src');
-            }
-
-            if (!$src) {
-                $src = $imageTag->getAttribute('data-large_image');
-            }
-
-            if(substr( $src, 0, 3) === "{%=") {
-                $this->logger->log("Skipping due to template {%= url");
-                continue;
-            }
-
-            if(strpos($imageTag->getAttribute('class'), "hidden") !== false){
-                // if image class has "hidden" class, disable lazy load for those images.
-                // this is useful for sliders.
-                $imageTag->setAttribute("data-gmlazy", 'false');
-            }
-
-            if (in_array($src, $excluded_urls) || strpos($imageTag->getAttribute('fetchpriority'), "high") !== false) {
-                // don't process excluded URLs
-                $imageTag->setAttribute("data-gumlet", 'false');
-                $new_img_tag = $doc->saveHTML($imageTag);
-                $content = str_replace($unconverted_img_tag, $new_img_tag, $content);
-                $this->logger->log("Skipping due to excluded URL");
-                continue;
-            }
-
-            if (strpos($src, ';base64,') !== false || strpos($src, 'data:image/svg+xml') !== false) {
-                // does not process data URL.
-                $this->logger->log("Skipping due to data URL");
-                continue;
-            }
-
-            if (strpos(stripcslashes($src), '"') !== false) {
-                // this URL is actually part of JSON data. It has quotes in it. We will ignore this URL
-                continue;
-            }
-
-            preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $src, $size_matches, PREG_PATTERN_ORDER);
-            if ($size_matches[0] && strlen($size_matches[0][0]) > 4 && $this->get_option("original_images")) {
-                $src = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $src);
-            }
-
-            $current_host = parse_url($src, PHP_URL_HOST);
-
-            // S3 host without region is detected here and replaced with host with region.
-            // this is a bad hack. unhack it.
-            if(strpos($current_host, "amazonaws.com") !== false){
-                $current_host_array = explode(".", $current_host);
-                if(count($current_host_array) == 4 && $is_s3_host) {
-                // this current host is S3 URL without region in it. put actual host with region into it.
-                $parsed_url = parse_url($src);
-                $parsed_url['host'] = $going_to_be_replaced_host;
-                $src = $this->unparse_url($parsed_url);
+            
+            try {
+                $doc = new DOMDocument();
+                $img_tag = $this->convert_to_utf($unconverted_img_tag);
+                
+                // Suppress warnings during HTML parsing
+                libxml_use_internal_errors(true);
+                $doc->loadHTML($img_tag, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+                libxml_clear_errors();
+                
+                $imageTag = $doc->getElementsByTagName('img')[0];
+                if (!$imageTag) {
+                    $this->logger->log("No img tag found in HTML");
+                    continue;
                 }
-            }
-            if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host || !parse_url($src, PHP_URL_HOST)) {
-                $imageTag->setAttribute("data-gmsrc", $src);
-                $imageTag->setAttribute("src", plugins_url('assets/images/pixel.png', __DIR__));
-                $imageTag->removeAttribute("srcset");
-                $imageTag->removeAttribute("data-src");
-                $imageTag->removeAttribute("data-srcset");
-                $imageTag->removeAttribute("data-lazy-srcset");
-                $imageTag->removeAttribute("data-lazy-src");
-                // check if this is magento product image and if it is, set data-src as well
-                if (strpos($imageTag->getAttribute("class"), "wp-post-image") !== false  && $imageTag->getAttribute("data-large_image_width") != '') {
-                    $imageTag->setAttribute("data-src", $src);
+                
+                $src = $imageTag->getAttribute('src');
+                if (!$src) {
+                    $src = $imageTag->getAttribute('data-src');
                 }
-                $new_img_tag = $doc->saveHTML($imageTag);
-                $this->logger->log("New img tag:", $new_img_tag);
-                $content = str_replace($unconverted_img_tag, $new_img_tag, $content);
-            } else {
-                $this->logger->log("Skipping due to mismatched host to be replaced.");
+                if (!$src) {
+                    $src = $imageTag->getAttribute('data-large_image');
+                }
+
+                if (substr($src, 0, 3) === "{%=") {
+                    $this->logger->log("Skipping due to template {%= url");
+                    continue;
+                }
+
+                if (strpos($imageTag->getAttribute('class'), "hidden") !== false) {
+                    $imageTag->setAttribute("data-gmlazy", 'false');
+                }
+
+                if (in_array($src, $excluded_urls) || strpos($imageTag->getAttribute('fetchpriority'), "high") !== false) {
+                    $imageTag->setAttribute("data-gumlet", 'false');
+                    $new_img_tag = $doc->saveHTML($imageTag);
+                    $content = str_replace($unconverted_img_tag, $new_img_tag, $content);
+                    $this->logger->log("Skipping due to excluded URL");
+                    continue;
+                }
+
+                if (strpos($src, ';base64,') !== false || strpos($src, 'data:image/svg+xml') !== false) {
+                    $this->logger->log("Skipping due to data URL");
+                    continue;
+                }
+
+                if (strpos(stripcslashes($src), '"') !== false) {
+                    continue;
+                }
+
+                preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $src, $size_matches, PREG_PATTERN_ORDER);
+                if ($size_matches[0] && strlen($size_matches[0][0]) > 4 && $this->get_option("original_images")) {
+                    $src = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $src);
+                }
+
+                $current_host = parse_url($src, PHP_URL_HOST);
+
+                if (strpos($current_host, "amazonaws.com") !== false) {
+                    $current_host_array = explode(".", $current_host);
+                    if (count($current_host_array) == 4 && $is_s3_host) {
+                        $parsed_url = parse_url($src);
+                        $parsed_url['host'] = $going_to_be_replaced_host;
+                        $src = $this->unparse_url($parsed_url);
+                    }
+                }
+
+                if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host || !parse_url($src, PHP_URL_HOST)) {
+                    $imageTag->setAttribute("data-gmsrc", $src);
+                    $imageTag->setAttribute("src", plugins_url('assets/images/pixel.png', __DIR__));
+                    $imageTag->removeAttribute("srcset");
+                    $imageTag->removeAttribute("data-src");
+                    $imageTag->removeAttribute("data-srcset");
+                    $imageTag->removeAttribute("data-lazy-srcset");
+                    $imageTag->removeAttribute("data-lazy-src");
+                    
+                    if (strpos($imageTag->getAttribute("class"), "wp-post-image") !== false && $imageTag->getAttribute("data-large_image_width") != '') {
+                        $imageTag->setAttribute("data-src", $src);
+                    }
+                    
+                    $new_img_tag = $doc->saveHTML($imageTag);
+                    $this->logger->log("New img tag:", $new_img_tag);
+                    $content = str_replace($unconverted_img_tag, $new_img_tag, $content);
+                } else {
+                    $this->logger->log("Skipping due to mismatched host to be replaced.");
+                }
+            } catch (Exception $e) {
+                $this->logger->log("Error processing image tag: " . $e->getMessage());
+                continue;
             }
         }
         return $content;
@@ -634,7 +649,7 @@ class Gumlet
     public function replace_srcset_in_source($matches,$content) {
         foreach ($matches[0] as $unconverted_img_tag) {
             $doc = new DOMDocument();
-            $source_tag = $this-> convert_to_utf($unconverted_img_tag);
+            $source_tag = $this->convert_to_utf($unconverted_img_tag);
             //write function to remove srcset for img and this function.
             @$doc->loadHTML($source_tag);
             $sourceTag = $doc->getElementsByTagName('source')[0];
@@ -719,18 +734,15 @@ class Gumlet
     }
 
     /**
-     * Convert img tag to UTF-8 enconding.
+     * Convert img tag to UTF-8 encoding.
      *
      * @param  string $unconverted_img_tag
      * @return string
      */
-    public function convert_to_utf($unconverted_img_tag){
-        if(function_exists("mb_convert_encoding")) {
-            $img_tag = mb_convert_encoding($unconverted_img_tag, 'HTML-ENTITIES', "UTF-8");
-            return $img_tag;
-        } else {
-            return $unconverted_img_tag;
-        }
+    public function convert_to_utf($unconverted_img_tag) {
+        // Use htmlspecialchars with ENT_QUOTES to handle both single and double quotes
+        // and ENT_HTML5 for better HTML5 compatibility
+        return htmlspecialchars($unconverted_img_tag, ENT_QUOTES | ENT_HTML5, 'UTF-8');
     }
 
     /**
