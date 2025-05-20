@@ -653,6 +653,11 @@ class Gumlet
             //write function to remove srcset for img and this function.
             @$doc->loadHTML($source_tag);
             $sourceTag = $doc->getElementsByTagName('source')[0];
+            if (!$sourceTag) {
+                $this->logger->log("No source tag found in HTML");
+                continue;
+            }
+
             $src = $sourceTag->getAttribute('srcset');
             $sourceTag->removeAttribute("srcset");
             $sourceTag->setAttribute("data-srcset", $src);
