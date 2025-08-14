@@ -556,11 +556,13 @@ class Gumlet
                 $doc->loadHTML($img_tag, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
                 libxml_clear_errors();
                 
-                $imageTag = $doc->getElementsByTagName('img')[0];
-                if (!$imageTag) {
+                $imageTags = $doc->getElementsByTagName('img');
+
+                if ($imageTags->length === 0) {
                     $this->logger->log("No img tag found in HTML");
                     continue;
                 }
+                $imageTag = $imageTags[0];
                 
                 $src = $imageTag->getAttribute('src');
                 if (!$src) {
@@ -652,12 +654,16 @@ class Gumlet
             $source_tag = $this->convert_to_utf($unconverted_img_tag);
             //write function to remove srcset for img and this function.
             @$doc->loadHTML($source_tag);
-            $sourceTag = $doc->getElementsByTagName('source')[0];
-            $src = $sourceTag->getAttribute('srcset');
-            $sourceTag->removeAttribute("srcset");
-            $sourceTag->setAttribute("data-srcset", $src);
-            $new_source_tag = $doc->saveHTML($sourceTag);
-            $content = str_replace($unconverted_img_tag, $new_source_tag, $content);
+            $sourceTag = $doc->getElementsByTagName('source');
+
+            if($sourceTag->length > 0){
+                $sourceTag = $sourceTag[0];
+                $src = $sourceTag->getAttribute('srcset');
+                $sourceTag->removeAttribute("srcset");
+                $sourceTag->setAttribute("data-srcset", $src);
+                $new_source_tag = $doc->saveHTML($sourceTag);
+                $content = str_replace($unconverted_img_tag, $new_source_tag, $content);
+            }
         }
         return $content;
     }

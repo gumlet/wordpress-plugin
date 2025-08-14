@@ -1,5 +1,9 @@
 == Changelog ==
 
+= 1.3.18 =
+* Fix fatal errors related to PHP 8.4 compatibility.
+
+
 = 1.2.17 =
 * Bug fix in width-from-flex setting.
 
