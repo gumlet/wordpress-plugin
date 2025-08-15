@@ -166,7 +166,7 @@ class Gumlet
                 $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
             }
 
-            wp_register_script('gumlet-script-async', 'https://cdn.jsdelivr.net/npm/gumlet.js@2.2/dist/gumlet.min.js');
+            wp_register_script('gumlet-script-async', 'https://cdn.jsdelivr.net/npm/gumlet.js@3.0/dist/main.global.js');
             wp_localize_script('gumlet-script-async', 'gumlet_wp_config', array(
               'gumlet_host' => parse_url($this->options['cdn_link'], PHP_URL_HOST),
               'current_host' => isset($external_cdn_host) ? $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST),
