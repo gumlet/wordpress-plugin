@@ -166,7 +166,7 @@ class Gumlet
                 $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
             }
 
-            wp_register_script('gumlet-script-async', 'https://cdn.jsdelivr.net/npm/gumlet.js@3.0/dist/main.global.js');
+            // wp_register_script('gumlet-script-async', 'https://cdn.jsdelivr.net/npm/gumlet.js@3.0/dist/main.global.js');
             wp_localize_script('gumlet-script-async', 'gumlet_wp_config', array(
               'gumlet_host' => parse_url($this->options['cdn_link'], PHP_URL_HOST),
               'current_host' => isset($external_cdn_host) ? $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST),
@@ -275,7 +275,7 @@ class Gumlet
                 && ($parsed_url['host'] === parse_url(home_url('/'), PHP_URL_HOST) 
                 || (isset($this->options['external_cdn_link']) && ! empty($this->options['external_cdn_link']) 
                 && strpos($this->options['external_cdn_link'], $parsed_url['host']) !== false))
-                && preg_match('/\.(jpg|jpeg|gif|png)$/i', $parsed_url['path'])
+                && preg_match('/\.(jpg|jpeg|png|gif|svg)$/i', $parsed_url['path'])
             ) 
             {
                 $cdn = parse_url($this->options['cdn_link']);
@@ -296,6 +296,7 @@ class Gumlet
                 }
                 $url = http_build_url($parsed_url);
                 $url = add_query_arg($this->get_global_params(), $url);
+                $this->logger->log("URL:", $url);
             }
         }
         return $url;
