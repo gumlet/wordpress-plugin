@@ -142,8 +142,9 @@ If you need any help, you can reach out to us at support@gumlet.com.
 == Changelog ==
 
 = 1.3.20 =
-* Added control to disable resizing images.
+* Fix DOM parsing for img/source tags: do not entity-encode the whole tag before loadHTML (was preventing any img from being found).
 * Support SVG URLs in replace_image_url.
+* Normalize JSON-style escapes in fragments (wp_unslash, \/) before parsing.
 
 
 = 1.3.19 =

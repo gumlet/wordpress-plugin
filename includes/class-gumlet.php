@@ -546,7 +546,7 @@ class Gumlet
     {
         $this->logger->log("Matched regex:", $matches);
         foreach ($matches[0] as $unconverted_img_tag) {
-            $this->logger->log("Processing img:", $unconverted_img_tag);
+            $this->logger->log('Processing img: ' . $unconverted_img_tag);
             
             try {
                 $doc = new DOMDocument();
@@ -629,7 +629,7 @@ class Gumlet
                     }
                     
                     $new_img_tag = $doc->saveHTML($imageTag);
-                    $this->logger->log("New img tag:", $new_img_tag);
+                    $this->logger->log('New img tag: ' . $new_img_tag);
                     $content = str_replace($unconverted_img_tag, $new_img_tag, $content);
                 } else {
                     $this->logger->log("Skipping due to mismatched host to be replaced.");
@@ -741,15 +741,16 @@ class Gumlet
     }
 
     /**
-     * Convert img tag to UTF-8 encoding.
+     * Prepare a matched tag for DOMDocument::loadHTML.
+     *
+     * Do not entity-encode the whole fragment: htmlspecialchars turns `<img` into `&lt;img`,
+     * so libxml never produces an img node (getElementsByTagName('img') stays empty).
      *
      * @param  string $unconverted_img_tag
      * @return string
      */
     public function convert_to_utf($unconverted_img_tag) {
-        // Use htmlspecialchars with ENT_QUOTES to handle both single and double quotes
-        // and ENT_HTML5 for better HTML5 compatibility
-        return htmlspecialchars($unconverted_img_tag, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        return gumlet_normalize_html_fragment_for_dom($unconverted_img_tag);
     }
 
     /**

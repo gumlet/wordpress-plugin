@@ -30,6 +30,7 @@ if (GUMLET_DEBUG) {
 
 include('includes/compability.php');
 include('includes/logger.php');
+include('includes/gumlet-html-fragment.php');
 include('includes/class-gumlet.php');
 include('includes/options-page.php');
 
