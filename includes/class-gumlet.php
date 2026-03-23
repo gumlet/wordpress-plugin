@@ -275,7 +275,7 @@ class Gumlet
                 && ($parsed_url['host'] === parse_url(home_url('/'), PHP_URL_HOST) 
                 || (isset($this->options['external_cdn_link']) && ! empty($this->options['external_cdn_link']) 
                 && strpos($this->options['external_cdn_link'], $parsed_url['host']) !== false))
-                && preg_match('/\.(jpg|jpeg|png|gif|svg)$/i', $parsed_url['path'])
+                && preg_match('/\.(jpg|jpeg|png|gif|svg|webp)$/i', $parsed_url['path'])
             ) 
             {
                 $cdn = parse_url($this->options['cdn_link']);
@@ -296,7 +296,6 @@ class Gumlet
                 }
                 $url = http_build_url($parsed_url);
                 $url = add_query_arg($this->get_global_params(), $url);
-                $this->logger->log("URL:", $url);
             }
         }
         return $url;
