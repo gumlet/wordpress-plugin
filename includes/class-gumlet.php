@@ -615,16 +615,24 @@ class Gumlet
                 }
 
                 if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host || !parse_url($src, PHP_URL_HOST)) {
-                    $imageTag->setAttribute("data-gmsrc", $src);
-                    $imageTag->setAttribute("src", plugins_url('assets/images/pixel.png', __DIR__));
+                    $gumlet_url = $this->replace_image_url($src);
+                    $auto_resize_on = (int) $this->get_option('auto_resize', 1) === 1;
+
+                    if ($auto_resize_on) {
+                        $imageTag->setAttribute("data-gmsrc", $gumlet_url);
+                        $imageTag->setAttribute("src", plugins_url('assets/images/pixel.png', __DIR__));
+                    } else {
+                        $imageTag->setAttribute("src", $gumlet_url);
+                        $imageTag->removeAttribute("data-gmsrc");
+                    }
                     $imageTag->removeAttribute("srcset");
                     $imageTag->removeAttribute("data-src");
                     $imageTag->removeAttribute("data-srcset");
                     $imageTag->removeAttribute("data-lazy-srcset");
                     $imageTag->removeAttribute("data-lazy-src");
                     
-                    if (strpos($imageTag->getAttribute("class"), "wp-post-image") !== false && $imageTag->getAttribute("data-large_image_width") != '') {
-                        $imageTag->setAttribute("data-src", $src);
+                    if ($auto_resize_on && strpos($imageTag->getAttribute("class"), "wp-post-image") !== false && $imageTag->getAttribute("data-large_image_width") != '') {
+                        $imageTag->setAttribute("data-src", $gumlet_url);
                     }
                     
                     $new_img_tag = $doc->saveHTML($imageTag);

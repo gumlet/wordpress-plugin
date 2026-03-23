@@ -152,6 +152,20 @@ class Gumlet_Options_Page
                     <tbody>
                         <tr>
                             <th>
+                                <label class="description" for="gumlet_settings_auto_resize">
+                                    <?php esc_html_e('Auto Resize', 'gumlet'); ?>
+                                </label>
+                            </th>
+                            <td>
+                                <input type="hidden" name="gumlet_settings[auto_resize]" value="0" />
+                                <input id="gumlet_settings_auto_resize" type="checkbox"
+                                    name="gumlet_settings[auto_resize]" value="1" <?php
+                                    checked($this->get_option('auto_resize', true)) ?> />
+                                <p style="color: #666"><?php esc_html_e('When enabled, images use a placeholder and Gumlet.js resizes per viewport. When disabled, the image src is set directly to the Gumlet URL (no placeholder).', 'gumlet'); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
                                 <label class="description" for="gumlet_settings[original_images]">
                                     <?php esc_html_e('Use Original Images', 'gumlet'); ?>
                                 </label>

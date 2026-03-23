@@ -1,6 +1,7 @@
 == Changelog ==
 
-= 1.3.20 =
+= 1.4.0 =
+* Advanced setting: Auto Resize (auto_resize). When disabled, img src is set directly to the Gumlet URL instead of the placeholder pixel (no viewport-based resize via gumlet.js for those tags).
 * Fix DOM parsing for img/source tags: do not entity-encode the whole tag before loadHTML (was preventing any img from being found).
 * Support SVG URLs in replace_image_url.
 * Normalize JSON-style escapes in fragments (wp_unslash, \/) before parsing.
