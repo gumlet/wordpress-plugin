@@ -161,7 +161,7 @@ class Gumlet
 
     public function enqueue_script()
     {
-        if (!empty($this->options['cdn_link']) && $this->isWelcome()) {
+        if (!empty($this->options['cdn_link']) && $this->isWelcome() && $this->is_auto_resize_enabled()) {
             if (isset($this->options['external_cdn_link'])) {
                 $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
             }
@@ -248,6 +248,16 @@ class Gumlet
     }
 
     /**
+     * Auto Resize: placeholder + gumlet.js viewport sizing. When false, src is set to the Gumlet URL and gumlet.js is not loaded.
+     *
+     * @return bool
+     */
+    protected function is_auto_resize_enabled()
+    {
+        return (int) $this->get_option('auto_resize', 1) === 1;
+    }
+
+    /**
      * Override options from settings.
      * Used in unit tests.
      *
@@ -275,7 +285,7 @@ class Gumlet
                 && ($parsed_url['host'] === parse_url(home_url('/'), PHP_URL_HOST) 
                 || (isset($this->options['external_cdn_link']) && ! empty($this->options['external_cdn_link']) 
                 && strpos($this->options['external_cdn_link'], $parsed_url['host']) !== false))
-                && preg_match('/\.(jpg|jpeg|png|gif|svg)$/i', $parsed_url['path'])
+                && preg_match('/\.(jpg|jpeg|png|gif|svg|webp)$/i', $parsed_url['path'])
             ) 
             {
                 $cdn = parse_url($this->options['cdn_link']);
@@ -296,7 +306,6 @@ class Gumlet
                 }
                 $url = http_build_url($parsed_url);
                 $url = add_query_arg($this->get_global_params(), $url);
-                $this->logger->log("URL:", $url);
             }
         }
         return $url;
@@ -546,7 +555,7 @@ class Gumlet
     {
         $this->logger->log("Matched regex:", $matches);
         foreach ($matches[0] as $unconverted_img_tag) {
-            $this->logger->log("Processing img:", $unconverted_img_tag);
+            $this->logger->log('Processing img: ' . $unconverted_img_tag);
             
             try {
                 $doc = new DOMDocument();
@@ -616,20 +625,28 @@ class Gumlet
                 }
 
                 if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host || !parse_url($src, PHP_URL_HOST)) {
-                    $imageTag->setAttribute("data-gmsrc", $src);
-                    $imageTag->setAttribute("src", plugins_url('assets/images/pixel.png', __DIR__));
+                    $gumlet_url = $this->replace_image_url($src);
+                    $auto_resize_on = $this->is_auto_resize_enabled();
+
+                    if ($auto_resize_on) {
+                        $imageTag->setAttribute("data-gmsrc", $gumlet_url);
+                        $imageTag->setAttribute("src", plugins_url('assets/images/pixel.png', __DIR__));
+                    } else {
+                        $imageTag->setAttribute("src", $gumlet_url);
+                        $imageTag->removeAttribute("data-gmsrc");
+                    }
                     $imageTag->removeAttribute("srcset");
                     $imageTag->removeAttribute("data-src");
                     $imageTag->removeAttribute("data-srcset");
                     $imageTag->removeAttribute("data-lazy-srcset");
                     $imageTag->removeAttribute("data-lazy-src");
                     
-                    if (strpos($imageTag->getAttribute("class"), "wp-post-image") !== false && $imageTag->getAttribute("data-large_image_width") != '') {
-                        $imageTag->setAttribute("data-src", $src);
+                    if ($auto_resize_on && strpos($imageTag->getAttribute("class"), "wp-post-image") !== false && $imageTag->getAttribute("data-large_image_width") != '') {
+                        $imageTag->setAttribute("data-src", $gumlet_url);
                     }
                     
                     $new_img_tag = $doc->saveHTML($imageTag);
-                    $this->logger->log("New img tag:", $new_img_tag);
+                    $this->logger->log('New img tag: ' . $new_img_tag);
                     $content = str_replace($unconverted_img_tag, $new_img_tag, $content);
                 } else {
                     $this->logger->log("Skipping due to mismatched host to be replaced.");
@@ -741,15 +758,16 @@ class Gumlet
     }
 
     /**
-     * Convert img tag to UTF-8 encoding.
+     * Prepare a matched tag for DOMDocument::loadHTML.
+     *
+     * Do not entity-encode the whole fragment: htmlspecialchars turns `<img` into `&lt;img`,
+     * so libxml never produces an img node (getElementsByTagName('img') stays empty).
      *
      * @param  string $unconverted_img_tag
      * @return string
      */
     public function convert_to_utf($unconverted_img_tag) {
-        // Use htmlspecialchars with ENT_QUOTES to handle both single and double quotes
-        // and ENT_HTML5 for better HTML5 compatibility
-        return htmlspecialchars($unconverted_img_tag, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        return gumlet_normalize_html_fragment_for_dom($unconverted_img_tag);
     }
 
     /**

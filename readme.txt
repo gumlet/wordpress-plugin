@@ -8,7 +8,7 @@ Author URI: https://www.gumlet.com
 Requires at least: 3.3
 Requires PHP: 5.6.3
 Tested up to: 6.8
-Stable tag: 1.3.20
+Stable tag: 1.4.0
 License: BSD-2
 License URI: http://opensource.org/licenses/BSD-2-Clause
 
@@ -141,9 +141,11 @@ If you need any help, you can reach out to us at support@gumlet.com.
 
 == Changelog ==
 
-= 1.3.20 =
-* Added control to disable resizing images.
+= 1.4.0 =
+* Advanced setting: Auto Resize (auto_resize). When disabled, img src is set directly to the Gumlet URL instead of the placeholder pixel.
+* Fix DOM parsing for img/source tags: do not entity-encode the whole tag before loadHTML (was preventing any img from being found).
 * Support SVG URLs in replace_image_url.
+* Normalize JSON-style escapes in fragments (wp_unslash, \/) before parsing.
 
 
 = 1.3.19 =

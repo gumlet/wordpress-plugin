@@ -152,6 +152,20 @@ class Gumlet_Options_Page
                     <tbody>
                         <tr>
                             <th>
+                                <label class="description" for="gumlet_settings_auto_resize">
+                                    <?php esc_html_e('Auto Resize', 'gumlet'); ?>
+                                </label>
+                            </th>
+                            <td>
+                                <input type="hidden" name="gumlet_settings[auto_resize]" value="0" />
+                                <input id="gumlet_settings_auto_resize" type="checkbox"
+                                    name="gumlet_settings[auto_resize]" value="1" <?php
+                                    checked($this->get_option('auto_resize', true)) ?> />
+                                <p style="color: #666"><?php esc_html_e('When enabled, images use a placeholder and Gumlet.js resizes per viewport (including lazy loading, if enabled). When disabled, Gumlet.js is not loaded: the image src is set directly to the Gumlet URL (no placeholder and no lazy loading).', 'gumlet'); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
                                 <label class="description" for="gumlet_settings[original_images]">
                                     <?php esc_html_e('Use Original Images', 'gumlet'); ?>
                                 </label>
@@ -314,12 +328,13 @@ class Gumlet_Options_Page
      * Get option and handle if option is not set
      *
      * @param string $key
-     *
+     * @param mixed  $default Returned when the key is not present in the array.
      * @return mixed
      */
-    protected function get_option($key)
+    protected function get_option($key, $default = '')
     {
-        return isset($this->options[ $key ]) ? $this->options[ $key ] : '';
+        // array_key_exists: key exists but value is null → still use null (isset() would treat as missing).
+        return array_key_exists($key, $this->options) ? $this->options[ $key ] : $default;
     }
 }
 
