@@ -161,7 +161,7 @@ class Gumlet
 
     public function enqueue_script()
     {
-        if (!empty($this->options['cdn_link']) && $this->isWelcome()) {
+        if (!empty($this->options['cdn_link']) && $this->isWelcome() && $this->is_auto_resize_enabled()) {
             if (isset($this->options['external_cdn_link'])) {
                 $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
             }
@@ -245,6 +245,16 @@ class Gumlet
     public function get_option($key, $default = null)
     {
         return array_key_exists($key, $this->options) ? $this->options[$key] : $default;
+    }
+
+    /**
+     * Auto Resize: placeholder + gumlet.js viewport sizing. When false, src is set to the Gumlet URL and gumlet.js is not loaded.
+     *
+     * @return bool
+     */
+    protected function is_auto_resize_enabled()
+    {
+        return (int) $this->get_option('auto_resize', 1) === 1;
     }
 
     /**
@@ -616,7 +626,7 @@ class Gumlet
 
                 if (parse_url($src, PHP_URL_HOST) == $going_to_be_replaced_host || parse_url($src, PHP_URL_HOST) == $gumlet_host || !parse_url($src, PHP_URL_HOST)) {
                     $gumlet_url = $this->replace_image_url($src);
-                    $auto_resize_on = (int) $this->get_option('auto_resize', 1) === 1;
+                    $auto_resize_on = $this->is_auto_resize_enabled();
 
                     if ($auto_resize_on) {
                         $imageTag->setAttribute("data-gmsrc", $gumlet_url);

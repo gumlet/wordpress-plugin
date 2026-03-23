@@ -328,12 +328,12 @@ class Gumlet_Options_Page
      * Get option and handle if option is not set
      *
      * @param string $key
-     *
+     * @param mixed  $default Used when key is absent (use array_key_exists so stored 0/false are kept).
      * @return mixed
      */
-    protected function get_option($key)
+    protected function get_option($key, $default = '')
     {
-        return isset($this->options[ $key ]) ? $this->options[ $key ] : '';
+        return array_key_exists($key, $this->options) ? $this->options[ $key ] : $default;
     }
 }
 
