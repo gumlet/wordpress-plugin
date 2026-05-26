@@ -1,7 +1,19 @@
 == Changelog ==
 
+= 1.4.1 =
+* WordPress 7.0 compatibility: tested up to 7.0; requires WordPress 6.0+ and PHP 7.4+.
+* Fix undefined $is_s3_host variable when rewriting S3 image URLs.
+* Fix fatal error when resolving relative CSS background image paths.
+* Fix PHP notice on archive and home views when checking excluded post types.
+* Load gumlet.js asynchronously in the footer using wp_script_add_data instead of script_loader_tag filtering.
+
 = 1.4.0 =
-* Advanced setting: Auto Resize (auto_resize). When disabled, img src is set directly to the Gumlet URL instead of the placeholder pixel (no viewport-based resize via gumlet.js for those tags).
+* Advanced setting: Auto Resize (auto_resize). When disabled, img src is set directly to the Gumlet URL instead of the placeholder pixel.
+* Fix DOM parsing for img/source tags: do not entity-encode the whole tag before loadHTML (was preventing any img from being found).
+* Support SVG URLs in replace_image_url.
+* Normalize JSON-style escapes in fragments (wp_unslash, \/) before parsing.
+
+= 1.3.20 =
 * Fix DOM parsing for img/source tags: do not entity-encode the whole tag before loadHTML (was preventing any img from being found).
 * Support SVG URLs in replace_image_url.
 * Normalize JSON-style escapes in fragments (wp_unslash, \/) before parsing.
