@@ -5,10 +5,10 @@ Tags: images, image management, image manipulation, image optimization, image co
 Author: Gumlet
 Text Domain: gumlet
 Author URI: https://www.gumlet.com
-Requires at least: 3.3
-Requires PHP: 5.6.3
-Tested up to: 6.8
-Stable tag: 1.4.0
+Requires at least: 6.0
+Requires PHP: 7.4
+Tested up to: 7.0
+Stable tag: 1.4.1
 License: BSD-2
 License URI: http://opensource.org/licenses/BSD-2-Clause
 
@@ -140,6 +140,13 @@ Please follow our official installation guide: [https://docs.gumlet.com/docs/ima
 If you need any help, you can reach out to us at support@gumlet.com.
 
 == Changelog ==
+
+= 1.4.1 =
+* WordPress 7.0 compatibility: tested up to 7.0; requires WordPress 6.0+ and PHP 7.4+.
+* Fix undefined $is_s3_host variable when rewriting S3 image URLs.
+* Fix fatal error when resolving relative CSS background image paths.
+* Fix PHP notice on archive and home views when checking excluded post types.
+* Load gumlet.js asynchronously in the footer using wp_script_add_data instead of script_loader_tag filtering.
 
 = 1.4.0 =
 * Advanced setting: Auto Resize (auto_resize). When disabled, img src is set directly to the Gumlet URL instead of the placeholder pixel.

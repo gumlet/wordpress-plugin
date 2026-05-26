@@ -90,10 +90,6 @@ class Gumlet
 
         $this->doingAjax = (function_exists("wp_doing_ajax") && wp_doing_ajax()) || (defined('DOING_AJAX') && DOING_AJAX);
 
-        // Change filter load order to ensure it loads after other CDN url transformations i.e. Amazon S3 which loads at position 99.
-
-        add_filter('script_loader_tag', [$this,'add_asyncdefer_attribute'], 10, 2);
-
         add_action('wp_head', [ $this, 'add_prefetch' ], 1);
 
         add_action('wp_enqueue_scripts', [$this, 'enqueue_script'], 1);
@@ -103,21 +99,33 @@ class Gumlet
         add_action('wp', [$this, 'init_ob'], 1);
     }
 
-    public function add_asyncdefer_attribute($tag, $handle)
+    public function enqueue_script()
     {
-        // if the unique handle/name of the registered script has 'async' in it
-        if (strpos($handle, 'async') !== false) {
-            // return the tag with the async attribute
-            return str_replace('<script ', '<script async ', $tag);
-        }
-        // if the unique handle/name of the registered script has 'defer' in it
-        elseif (strpos($handle, 'defer') !== false) {
-            // return the tag with the defer attribute
-            return str_replace('<script ', '<script defer ', $tag);
-        }
-        // otherwise skip
-        else {
-            return $tag;
+        if (!empty($this->options['cdn_link']) && $this->isWelcome() && $this->is_auto_resize_enabled()) {
+            if (isset($this->options['external_cdn_link'])) {
+                $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
+            }
+
+            wp_register_script(
+                'gumlet-script',
+                'https://cdn.jsdelivr.net/npm/gumlet.js@3.0/dist/main.global.js',
+                array(),
+                '3.0',
+                true
+            );
+            wp_script_add_data('gumlet-script', 'async', true);
+            wp_localize_script('gumlet-script', 'gumlet_wp_config', array(
+              'gumlet_host' => parse_url($this->options['cdn_link'], PHP_URL_HOST),
+              'current_host' => isset($external_cdn_host) ? $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST),
+              'lazy_load' => (!empty($this->options['lazy_load'])) ? 1 : 0,
+              'width_from_img' => get_option('gumlet_width_from_img') ? 1 : 0,
+              'width_from_flex' => get_option('gumlet_width_from_flex') ? 1 : 0,
+              'min_width' => get_option('gumlet_min_width') ? get_option('gumlet_min_width') : '',
+              'auto_compress' => (!empty($this->options['auto_compress'])) ? 1 : 0,
+              "auto_webp" => (!empty($this->options['server_webp'])) ? 1 : 0,
+              'quality' => (!empty($this->options['quality'])) ? $this->options['quality'] : 80
+            ));
+            wp_enqueue_script('gumlet-script');
         }
     }
 
@@ -159,29 +167,6 @@ class Gumlet
         );
     }
 
-    public function enqueue_script()
-    {
-        if (!empty($this->options['cdn_link']) && $this->isWelcome() && $this->is_auto_resize_enabled()) {
-            if (isset($this->options['external_cdn_link'])) {
-                $external_cdn_host = parse_url($this->options['external_cdn_link'], PHP_URL_HOST);
-            }
-
-            wp_register_script('gumlet-script-async', 'https://cdn.jsdelivr.net/npm/gumlet.js@3.0/dist/main.global.js');
-            wp_localize_script('gumlet-script-async', 'gumlet_wp_config', array(
-              'gumlet_host' => parse_url($this->options['cdn_link'], PHP_URL_HOST),
-              'current_host' => isset($external_cdn_host) ? $external_cdn_host : parse_url(home_url('/'), PHP_URL_HOST),
-              'lazy_load' => (!empty($this->options['lazy_load'])) ? 1 : 0,
-              'width_from_img' => get_option('gumlet_width_from_img') ? 1 : 0,
-              'width_from_flex' => get_option('gumlet_width_from_flex') ? 1 : 0,
-              'min_width' => get_option('gumlet_min_width') ? get_option('gumlet_min_width') : '',
-              'auto_compress' => (!empty($this->options['auto_compress'])) ? 1 : 0,
-              "auto_webp" => (!empty($this->options['server_webp'])) ? 1 : 0,
-              'quality' => (!empty($this->options['quality'])) ? $this->options['quality'] : 80
-            ));
-            wp_enqueue_script('gumlet-script-async');
-        }
-    }
-
     public function init_ob()
     {
         //test this,cdn_link checking in init_ob
@@ -201,7 +186,7 @@ class Gumlet
                 $this->logger->log("inside ajax req.",$_SERVER['HTTP_X_REQUESTED_WITH']);
                 ob_start([$this, 'convert_json']);
             } 
-            else if(in_array(get_post_type($wp_query->post), $excluded_post_types)){
+            else if(!empty($wp_query->post) && in_array(get_post_type($wp_query->post), $excluded_post_types, true)){
                 // excluded post types will not have gumlet-js enabled on them.
                 ob_start([$this, 'replace_images_in_amp_instant_article']);
             } else{
@@ -318,6 +303,36 @@ class Gumlet
       return $str;
     }
 
+    private static function get_home_path()
+    {
+        if (function_exists('get_home_path')) {
+            return \get_home_path();
+        }
+
+        return defined('ABSPATH') ? ABSPATH : '/';
+    }
+
+    private static function normalizePath($path)
+    {
+        $path = str_replace('\\', '/', $path);
+        $is_absolute = ($path !== '' && $path[0] === '/');
+        $parts = array();
+
+        foreach (explode('/', $path) as $segment) {
+            if ($segment === '' || $segment === '.') {
+                continue;
+            }
+            if ($segment === '..') {
+                array_pop($parts);
+            } else {
+                $parts[] = $segment;
+            }
+        }
+
+        $normalized = implode('/', $parts);
+        return ($is_absolute ? '/' : '') . $normalized;
+    }
+
     static function absoluteUrl($url, $cssPath = false) {
         $url = trim($url);
         $URI = parse_url($url);
@@ -413,9 +428,6 @@ class Gumlet
      */
     public function replace_images_in_content($content)
     {
-        // $myfile = fopen("/Users/adityapatadia/gumlet/wordpress/json.txt", "r") or die("Unable to open file!");
-        // $content = fread($myfile,filesize("/Users/adityapatadia/gumlet/wordpress/json.txt"));
-        // fclose($myfile); 
 
         $excluded_urls = explode("\n", $this->get_option("exclude_images"));
         $excluded_urls = array_map('trim', $excluded_urls);
@@ -440,7 +452,7 @@ class Gumlet
         $this->logger->log("Processing content:". $content);
         // replaces src with data-gmsrc and removes srcset from images
         if (preg_match_all('/<img\s[^>]*src=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches, PREG_PATTERN_ORDER)) {
-            $content = $this->replace_src_in_imgtag($matches,$content,$gumlet_host,$going_to_be_replaced_host,$excluded_urls);
+            $content = $this->replace_src_in_imgtag($matches, $content, $gumlet_host, $going_to_be_replaced_host, $excluded_urls, $is_s3_host);
         }
 
         // now we will replace srcset in SOURCE tags to data-srcset.
@@ -454,14 +466,6 @@ class Gumlet
             array($this, 'replace_wc_gallery_thumbs'),
             $content
         );
-
-        // We don't want links to be processed by Gumlet
-
-        // if (preg_match_all('/<a\s[^>]*href=([\"\']??)([^\" >]*?)\1[^>]*>(.*)<\/a>/iU', $content, $matches)) {
-        //     foreach ($matches[0] as $link) {
-        //         $content = str_replace($link[2], apply_filters('wp_get_attachment_url', $link[2], null), $content);
-        //     }
-        // }
 
         // this replaces background URLs on any tags with data-bg
         $content_length = strlen($content);
@@ -548,10 +552,11 @@ class Gumlet
      * @param  string $content
      * @param  string $gumlet_host
      * @param  string $going_to_be_replaced_host
-     * @param  string $excluded_urls
+     * @param  array  $excluded_urls
+     * @param  bool   $is_s3_host
      * @return string
      */
-    public function replace_src_in_imgtag($matches, $content, $gumlet_host, $going_to_be_replaced_host, $excluded_urls)
+    public function replace_src_in_imgtag($matches, $content, $gumlet_host, $going_to_be_replaced_host, $excluded_urls, $is_s3_host = false)
     {
         $this->logger->log("Matched regex:", $matches);
         foreach ($matches[0] as $unconverted_img_tag) {
