@@ -259,6 +259,51 @@ class Gumlet_Options_Page
                     </tbody>
                 </table>
             </div>
+            <input type="radio" id="tabexperimental" name="mytabs">
+            <label for="tabexperimental" class="mytablabel">Experimental</label>
+            <div class="tab">
+                <table class="form-table">
+                    <tbody>
+                        <tr>
+                            <th>
+                                <label class="description" for="gumlet_settings[optimize_priority_images]">
+                                    <?php esc_html_e('Optimize Priority Images', 'gumlet'); ?>
+                                </label>
+                            </th>
+                            <td>
+                                <input id="gumlet_settings[optimize_priority_images]" type="checkbox"
+                                    name="gumlet_settings[optimize_priority_images]" value="1" <?php
+                                    checked($this->get_option('optimize_priority_images')) ?> />
+                                <p style="color: #666">Serves your most important image (usually the hero or first
+                                    image) through Gumlet at the right size for each screen, without waiting for
+                                    Gumlet.js. WordPress and many themes mark this image with fetchpriority="high", and by
+                                    default Gumlet leaves it untouched, so it loads at its full original size.
+                                    <br>Turn this on to improve Largest Contentful Paint (LCP) and reduce mobile page
+                                    weight. Recommended if your theme uses large banner or slider images.</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                <label class="description" for="gumlet_settings[aspect_ratio_placeholder]">
+                                    <?php esc_html_e('Aspect-Ratio Placeholders', 'gumlet'); ?>
+                                </label>
+                            </th>
+                            <td>
+                                <input id="gumlet_settings[aspect_ratio_placeholder]" type="checkbox"
+                                    name="gumlet_settings[aspect_ratio_placeholder]" value="1" <?php
+                                    checked($this->get_option('aspect_ratio_placeholder')) ?> />
+                                <p style="color: #666">While an image is waiting to load, reserves space with the image's
+                                    exact shape (from its width and height attributes) instead of a 1x1 square. This stops
+                                    content from jumping as images load (better CLS) and fixes gaps in masonry grids,
+                                    galleries and sliders that measure images while loading. Images without width and
+                                    height use the default placeholder.
+                                    <br>Turn this on if you see large gaps or overlapping content that corrects itself
+                                    when the browser window is resized.</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
         <input type="submit" class="button-primary" value="<?php esc_html_e('Save Options', 'gumlet'); ?>" />
         <style>

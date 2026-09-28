@@ -596,7 +596,11 @@ class Gumlet
                     $imageTag->setAttribute("data-gmlazy", 'false');
                 }
 
-                if (in_array($src, $excluded_urls) || strpos($imageTag->getAttribute('fetchpriority'), "high") !== false) {
+                // fetchpriority=high (LCP) images are rewritten server-side with a
+                // responsive srcset so they get resized without waiting for gumlet.js.
+                $is_priority = strpos($imageTag->getAttribute('fetchpriority'), "high") !== false;
+
+                if (in_array($src, $excluded_urls) || ($is_priority && !$this->get_option("optimize_priority_images"))) {
                     $imageTag->setAttribute("data-gumlet", 'false');
                     $new_img_tag = $doc->saveHTML($imageTag);
                     $content = str_replace($unconverted_img_tag, $new_img_tag, $content);
@@ -633,9 +637,16 @@ class Gumlet
                     $gumlet_url = $this->replace_image_url($src);
                     $auto_resize_on = $this->is_auto_resize_enabled();
 
+                    if ($is_priority) {
+                        $this->set_priority_image_attributes($imageTag, $gumlet_url);
+                        $new_img_tag = $doc->saveHTML($imageTag);
+                        $content = str_replace($unconverted_img_tag, $new_img_tag, $content);
+                        continue;
+                    }
+
                     if ($auto_resize_on) {
                         $imageTag->setAttribute("data-gmsrc", $gumlet_url);
-                        $imageTag->setAttribute("src", plugins_url('assets/images/pixel.png', __DIR__));
+                        $imageTag->setAttribute("src", $this->get_placeholder_src($imageTag));
                     } else {
                         $imageTag->setAttribute("src", $gumlet_url);
                         $imageTag->removeAttribute("data-gmsrc");
@@ -654,6 +665,11 @@ class Gumlet
                     $this->logger->log('New img tag: ' . $new_img_tag);
                     $content = str_replace($unconverted_img_tag, $new_img_tag, $content);
                 } else {
+                    if ($is_priority) {
+                        $imageTag->setAttribute("data-gumlet", 'false');
+                        $new_img_tag = $doc->saveHTML($imageTag);
+                        $content = str_replace($unconverted_img_tag, $new_img_tag, $content);
+                    }
                     $this->logger->log("Skipping due to mismatched host to be replaced.");
                 }
             } catch (Exception $e) {
@@ -662,6 +678,62 @@ class Gumlet
             }
         }
         return $content;
+    }
+
+    /**
+     * Give a priority (LCP) image a real Gumlet src plus a width-based srcset,
+     * so the browser picks a right-sized image without waiting for gumlet.js.
+     *
+     * @param DOMElement $imageTag
+     * @param string     $gumlet_url
+     */
+    protected function set_priority_image_attributes($imageTag, $gumlet_url)
+    {
+        $max_width = (int) $imageTag->getAttribute('width');
+        $max_width = $max_width > 0 ? $max_width * 2 : 2560;
+
+        $srcset = [];
+        foreach ([320, 480, 640, 768, 1024, 1280, 1536, 1920, 2560] as $w) {
+            if ($w > $max_width) {
+                break;
+            }
+            $srcset[] = add_query_arg('w', $w, $gumlet_url) . ' ' . $w . 'w';
+        }
+
+        $imageTag->setAttribute("src", add_query_arg('w', min(1280, $max_width), $gumlet_url));
+        if ($srcset) {
+            $imageTag->setAttribute("srcset", implode(', ', $srcset));
+            if (!$imageTag->getAttribute('sizes')) {
+                $imageTag->setAttribute("sizes", '100vw');
+            }
+        }
+        $imageTag->setAttribute("data-gumlet", 'false');
+        $imageTag->removeAttribute("data-gmsrc");
+        $imageTag->removeAttribute("data-src");
+        $imageTag->removeAttribute("data-srcset");
+        $imageTag->removeAttribute("data-lazy-srcset");
+        $imageTag->removeAttribute("data-lazy-src");
+    }
+
+    /**
+     * Transparent SVG placeholder with the image's own aspect ratio, so layout
+     * (e.g. masonry grids) is correct before gumlet.js swaps in the real image.
+     * Falls back to the 1x1 pixel when the option is off or width/height are unknown.
+     *
+     * @param DOMElement $imageTag
+     * @return string
+     */
+    protected function get_placeholder_src($imageTag)
+    {
+        if (!$this->get_option("aspect_ratio_placeholder")) {
+            return plugins_url('assets/images/pixel.png', __DIR__);
+        }
+        $width = (int) $imageTag->getAttribute('width');
+        $height = (int) $imageTag->getAttribute('height');
+        if ($width > 0 && $height > 0) {
+            return "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20" . $width . "%20" . $height . "'%3E%3C/svg%3E";
+        }
+        return plugins_url('assets/images/pixel.png', __DIR__);
     }
 
     /**
