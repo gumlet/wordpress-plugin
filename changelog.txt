@@ -1,5 +1,8 @@
 == Changelog ==
 
+= 1.4.4 =
+* Experimental things to enhance your user experience, checkout Plugin settings > Experimental
+
 = 1.4.3 =
 * WordPress 7.1 compatibility: tested up to 7.1.
 
