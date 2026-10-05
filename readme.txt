@@ -8,7 +8,7 @@ Author URI: https://www.gumlet.com
 Requires at least: 6.0
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 1.4.4
+Stable tag: 1.4.5
 License: BSD-2
 License URI: http://opensource.org/licenses/BSD-2-Clause
 
@@ -94,6 +94,7 @@ More details on our [website](https://www.gumlet.com/pricing)
 * **Image Metadata** - Keep (for photographers) or Remove (for optimisation), you choose!
 * **GDPR compliant** - We do not record or store any personal information about your users.
 * **Video Embed** - Added support for Gumlet Video Embeds.
+* **Signed URLs (experimental)** - Sign image URLs so unsigned or modified requests are rejected. Optional expiry in seconds. Auto Resize stays off while this is on.
 
 = 15 MINUTE INSTALLATION GUIDE =
 
@@ -130,6 +131,9 @@ A: The limit is not hard enforced. When you cross the limit, we will send you in
 = Q: Does Gumlet delete or replace my original full-size images? =
 A: Nope. Your original images always remain as they are and we never touch them. We only resize and compress images on-the-fly and cache it in our servers. You retain full control over your original images and they are never overwritten.
 
+= Q: Why is Auto Resize off when Signed URLs is enabled? =
+A: Signed URLs are experimental (Settings → Experimental). The plugin signs each image URL on the server. Gumlet.js would then add the width in the browser, which changes the URL, and Gumlet would reject it. Leave the expiry field blank for URLs that do not expire, or set a duration in seconds. Keep any full-page cache shorter than that duration. Enable Secure URLs on the Gumlet source only after the token is saved, then clear the page cache.
+
 = Q: I’m a photographer, can I keep all my EXIF data? =
 A: Yes! EXIF data stores camera settings, focal length, date, time and location information in image files. Since we never overwrite your original images, your all EXIF data will always be preserved. We only remove the EXIF data when we deliver images to your users.
 
@@ -140,6 +144,13 @@ Please follow our official installation guide: [https://docs.gumlet.com/docs/ima
 If you need any help, you can reach out to us at support@gumlet.com.
 
 == Changelog ==
+
+= 1.4.5 =
+* Experimental: Signed URLs. Image URLs are signed with the source secure token, with an optional expiry duration in seconds. Auto Resize stays off while this is enabled, because Gumlet.js would change the URL after it is signed.
+* Sign every Gumlet image URL, including images already on the Gumlet host, gallery links, and data-srcset. Previously only fetchpriority="high" images were signed.
+
+= 1.4.4 =
+* Experimental things to enhance your user experience, checkout Plugin settings > Experimental
 
 = 1.4.3 =
 * WordPress 7.1 compatibility: tested up to 7.1.

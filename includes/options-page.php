@@ -56,8 +56,18 @@ class Gumlet_Options_Page
     <?php
             if( isset($_GET['settings-updated']) ){
           ?>
-    <div class="notice notice-warning">
+    <div class="notice notice-warning gumlet-warning">
         <p><strong>Heads up! Clear cache:</strong> We recommend you clear cache after enabling Gumlet.</p>
+    </div>
+    <?php
+            }
+            if (!empty($this->options['signed_urls'])) {
+          ?>
+    <div class="notice notice-warning gumlet-warning">
+        <p><strong>Signed URLs are on.</strong> Auto Resize stays off. Gumlet.js would change the image URL after it is signed, and Gumlet would reject that request. Images load from the signed URL. Enable Secure URLs on the Gumlet source after the token below is saved, then clear any page cache.</p>
+        <?php if ((int) $this->get_option('signed_url_expiry') > 0) { ?>
+        <p>These URLs expire <?php echo (int) $this->get_option('signed_url_expiry'); ?> seconds after the page is rendered. Keep any full-page cache shorter than that.</p>
+        <?php } ?>
     </div>
     <?php
             }
@@ -162,6 +172,7 @@ class Gumlet_Options_Page
                                     name="gumlet_settings[auto_resize]" value="1" <?php
                                     checked($this->get_option('auto_resize', true)) ?> />
                                 <p style="color: #666"><?php esc_html_e('When enabled, images use a placeholder and Gumlet.js resizes per viewport (including lazy loading, if enabled). When disabled, Gumlet.js is not loaded: the image src is set directly to the Gumlet URL (no placeholder and no lazy loading).', 'gumlet'); ?></p>
+                                <p class="gumlet-warning"><?php esc_html_e('Ignored while Signed URLs is enabled under Experimental. Auto Resize stays off so Gumlet.js cannot change a URL after it is signed.', 'gumlet'); ?></p>
                             </td>
                         </tr>
                         <tr>
@@ -301,6 +312,47 @@ class Gumlet_Options_Page
                                     when the browser window is resized.</p>
                             </td>
                         </tr>
+                        <tr>
+                            <th>
+                                <label class="description" for="gumlet_settings[signed_urls]">
+                                    <?php esc_html_e('Signed URLs', 'gumlet'); ?>
+                                </label>
+                            </th>
+                            <td>
+                                <input id="gumlet_settings[signed_urls]" type="checkbox"
+                                    name="gumlet_settings[signed_urls]" value="1" <?php
+                                    checked($this->get_option('signed_urls')) ?> />
+                                <p style="color: #666">Signs each image URL with your Gumlet source secure token. Unsigned or modified URLs are rejected, which stops other sites from using your images or CDN and consuming bandwidth.</p>
+                                <p class="gumlet-warning"><strong>Auto Resize will not run while this is on.</strong> Gumlet.js adds the width in the browser after the URL is signed, and Gumlet rejects the changed URL. Images are served from the signed URL directly. Gumlet.js lazy loading stays off as well. In the Gumlet dashboard, open the image source, Security tab, and turn on Secure URLs. Paste the token below and save here before enabling it on the source, then clear any page cache.</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                <label class="description" for="gumlet_settings[secure_token]">
+                                    <?php esc_html_e('Secure token', 'gumlet'); ?>
+                                </label>
+                            </th>
+                            <td>
+                                <input id="gumlet_settings[secure_token]" type="text" name="gumlet_settings[secure_token]"
+                                    value="<?php echo esc_attr($this->get_option('secure_token')); ?>"
+                                    class="regular-text code" autocomplete="off" spellcheck="false" />
+                                <p class="gumlet-warning">From the source Security tab. Used only on the server to sign URLs. Leave Signed URLs off until this is saved.</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                <label class="description" for="gumlet_settings[signed_url_expiry]">
+                                    <?php esc_html_e('Expiry (seconds)', 'gumlet'); ?>
+                                </label>
+                            </th>
+                            <td>
+                                <input id="gumlet_settings[signed_url_expiry]" type="number" min="0" step="1"
+                                    name="gumlet_settings[signed_url_expiry]" placeholder="Optional"
+                                    value="<?php echo esc_attr($this->get_option('signed_url_expiry')); ?>"
+                                    style="width: 200px;" />
+                                <p class="gumlet-warning">Optional. Leave blank and signed URLs do not expire. A number is how many seconds the URL stays valid after the page is rendered (3600 is one hour). Gumlet rejects it after that and caches the image only until then. Keep any full-page cache shorter than this value.</p>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -336,6 +388,17 @@ class Gumlet_Options_Page
 
         .mytabs input[type="radio"]:checked + label {
             background: #fff;
+        }
+
+        .gumlet-warning,
+        .notice.gumlet-warning,
+        .notice.gumlet-warning p {
+            color: #d63638;
+        }
+
+        .notice.gumlet-warning {
+            border-left-color: #d63638;
+            background: #fcf0f1;
         }
         </style>
 

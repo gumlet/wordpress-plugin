@@ -30,6 +30,14 @@ class Gumlet
      */
     protected $buffer_started = false;
 
+    /**
+     * Signature expiry for this request.
+     * false until resolved, null when no expiry is configured, otherwise a unix timestamp.
+     *
+     * @var int|null|false
+     */
+    protected $signed_url_expires_at = false;
+
     private $doingAjax = false;
 
     public static $excludedAjaxActions = array(
@@ -234,12 +242,55 @@ class Gumlet
 
     /**
      * Auto Resize: placeholder + gumlet.js viewport sizing. When false, src is set to the Gumlet URL and gumlet.js is not loaded.
+     * Signed URLs force this off, because Gumlet.js would change the query string after the signature is created.
      *
      * @return bool
      */
     protected function is_auto_resize_enabled()
     {
+        if (!empty($this->options['signed_urls'])) {
+            return false;
+        }
+
         return (int) $this->get_option('auto_resize', 1) === 1;
+    }
+
+    /**
+     * Unix timestamp written into signed URLs, or null when expiry is left blank.
+     * One value is reused for every image on this request.
+     *
+     * @return int|null
+     */
+    protected function get_signed_url_expires()
+    {
+        if ($this->signed_url_expires_at !== false) {
+            return $this->signed_url_expires_at;
+        }
+
+        $seconds = (int) $this->get_option('signed_url_expiry', 0);
+        $this->signed_url_expires_at = $seconds > 0 ? time() + $seconds : null;
+
+        return $this->signed_url_expires_at;
+    }
+
+    /**
+     * Sign a Gumlet image URL when Signed URLs is enabled and a token is saved.
+     *
+     * @param string $url
+     * @return string
+     */
+    protected function sign_image_url($url)
+    {
+        if (empty($this->options['signed_urls'])) {
+            return $url;
+        }
+
+        $token = trim((string) $this->get_option('secure_token', ''));
+        if ($token === '') {
+            return $url;
+        }
+
+        return gumlet_sign_image_url($url, $token, $this->get_signed_url_expires());
     }
 
     /**
@@ -251,6 +302,7 @@ class Gumlet
     public function set_options($options)
     {
         $this->options = $options;
+        $this->signed_url_expires_at = false;
     }
 
     /**
@@ -264,36 +316,81 @@ class Gumlet
     {
         if (! empty($this->options['cdn_link'])) {
             $parsed_url = parse_url($url);
+            $cdn = parse_url($this->options['cdn_link']);
+            $gumlet_host = isset($cdn['host']) ? $cdn['host'] : '';
+            $on_gumlet = $gumlet_host !== '' && isset($parsed_url['host']) && strcasecmp($parsed_url['host'], $gumlet_host) === 0;
             //Check if image is hosted on current site url -OR- the CDN url specified. Using strpos because we're comparing the host to a full CDN url.
+            //URLs already on the Gumlet host still need global params and a signature. Only priority images were signed before, because that path calls sign_image_url on its own.
             if (
                 isset($parsed_url['host'], $parsed_url['path'])
-                && ($parsed_url['host'] === parse_url(home_url('/'), PHP_URL_HOST) 
+                && ($on_gumlet
+                || $parsed_url['host'] === parse_url(home_url('/'), PHP_URL_HOST) 
                 || (isset($this->options['external_cdn_link']) && ! empty($this->options['external_cdn_link']) 
                 && strpos($this->options['external_cdn_link'], $parsed_url['host']) !== false))
                 && preg_match('/\.(jpg|jpeg|png|gif|svg|webp)$/i', $parsed_url['path'])
             ) 
             {
-                $cdn = parse_url($this->options['cdn_link']);
-
-                foreach ([ 'scheme', 'host', 'port' ] as $url_part){
-                    if (isset($cdn[ $url_part ])) {
-                        $parsed_url[ $url_part ] = $cdn[ $url_part ];
-                    } else {
-                        unset($parsed_url[ $url_part ]);
+                if (!$on_gumlet) {
+                    foreach ([ 'scheme', 'host', 'port' ] as $url_part){
+                        if (isset($cdn[ $url_part ])) {
+                            $parsed_url[ $url_part ] = $cdn[ $url_part ];
+                        } else {
+                            unset($parsed_url[ $url_part ]);
+                        }
                     }
-                }
-                if (! empty($this->options['external_cdn_link'])) {
-                    $cdn_path = parse_url($this->options['external_cdn_link'], PHP_URL_PATH);
+                    if (! empty($this->options['external_cdn_link'])) {
+                        $cdn_path = parse_url($this->options['external_cdn_link'], PHP_URL_PATH);
 
-                    if (isset($cdn_path, $parsed_url['path']) && $cdn_path !== '/' && ! empty($parsed_url['path'])) {
-                        $parsed_url['path'] = str_replace($cdn_path, '', $parsed_url['path']);
+                        if (isset($cdn_path, $parsed_url['path']) && $cdn_path !== '/' && ! empty($parsed_url['path'])) {
+                            $parsed_url['path'] = str_replace($cdn_path, '', $parsed_url['path']);
+                        }
                     }
                 }
                 $url = http_build_url($parsed_url);
                 $url = add_query_arg($this->get_global_params(), $url);
+                $url = $this->sign_image_url($url);
             }
         }
         return $url;
+    }
+
+    /**
+     * Sign Gumlet image URLs that were not rebuilt as img src.
+     * Covers links, data-srcset, and files already stored on the Gumlet host.
+     *
+     * @param string $content
+     * @return string
+     */
+    protected function sign_unsigned_gumlet_urls($content)
+    {
+        if (empty($this->options['signed_urls']) || empty($this->options['cdn_link'])) {
+            return $content;
+        }
+        if (trim((string) $this->get_option('secure_token', '')) === '') {
+            return $content;
+        }
+
+        $gumlet_host = parse_url($this->options['cdn_link'], PHP_URL_HOST);
+        if (!$gumlet_host) {
+            return $content;
+        }
+
+        $pattern = '#https?://' . preg_quote($gumlet_host, '#') . '/[^"\'\s>]*?\.(?:jpe?g|png|gif|svg|webp)(?:\?[^"\'\s>]*)?#i';
+
+        return preg_replace_callback($pattern, function ($match) {
+            $raw = html_entity_decode($match[0], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $query = parse_url($raw, PHP_URL_QUERY);
+            if (is_string($query) && preg_match('/(?:^|&)s=/', $query)) {
+                return $match[0];
+            }
+
+            $signed = $this->replace_image_url($raw);
+            if ($signed === $raw) {
+                return $match[0];
+            }
+
+            return str_replace('&', '&amp;', $signed);
+        }, $content);
     } 
 
     public function replace_wc_gallery_thumbs($matches) {
@@ -416,7 +513,7 @@ class Gumlet
             $this->logger->log("img srcset",$matches);
             $content = $this->replace_in_amp_srcset($matches,$content,$gumlet_host,$going_to_be_replaced_host);
         }
-        return $content;
+        return $this->sign_unsigned_gumlet_urls($content);
     }
 
     /**
@@ -491,8 +588,8 @@ class Gumlet
             }
         }
         $content = $this->replace_src_in_css($final_matches,$content,$going_to_be_replaced_host,$gumlet_host,$excluded_urls);
-        
-        return $content;
+
+        return $this->sign_unsigned_gumlet_urls($content);
     }
 
     /**
@@ -697,10 +794,10 @@ class Gumlet
             if ($w > $max_width) {
                 break;
             }
-            $srcset[] = add_query_arg('w', $w, $gumlet_url) . ' ' . $w . 'w';
+            $srcset[] = $this->sign_image_url(add_query_arg('w', $w, $gumlet_url)) . ' ' . $w . 'w';
         }
 
-        $imageTag->setAttribute("src", add_query_arg('w', min(1280, $max_width), $gumlet_url));
+        $imageTag->setAttribute("src", $this->sign_image_url(add_query_arg('w', min(1280, $max_width), $gumlet_url)));
         if ($srcset) {
             $imageTag->setAttribute("srcset", implode(', ', $srcset));
             if (!$imageTag->getAttribute('sizes')) {
@@ -785,9 +882,17 @@ class Gumlet
                     // don't process excluded URLs
                     continue;
                 }
+                $original_bg = $bg['image'];
                 preg_match_all('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', $bg['image'], $size_matches);
                 if ($size_matches[0] && strlen($size_matches[0][0]) > 4  && $this->get_option("original_images")) {
                     $bg['image'] = preg_replace('/-\d+x\d+(?=\.(jpg|jpeg|png|gif|svg))/i', '', $bg['image']);
+                }
+                // Gumlet.js reads data-bg. With Auto Resize off (including Signed URLs), keep a real CSS url so the background still loads and can be signed.
+                if (!$this->is_auto_resize_enabled()) {
+                    $bg['image'] = $this->replace_image_url($bg['image']);
+                    $final_bg_style = str_replace($original_bg, $bg['image'], $match);
+                    $content = str_replace(array($match.';', $match), array($final_bg_style, $final_bg_style), $content);
+                    continue;
                 }
                 $bg_less_match = str_replace($bg[0], '', $match);
                 $data_match = 'data-bg="'.$bg['image'].'" '.$bg_less_match;
