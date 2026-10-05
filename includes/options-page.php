@@ -56,7 +56,7 @@ class Gumlet_Options_Page
     <?php
             if( isset($_GET['settings-updated']) ){
           ?>
-    <div class="notice notice-warning gumlet-warning">
+    <div class="notice notice-warning">
         <p><strong>Heads up! Clear cache:</strong> We recommend you clear cache after enabling Gumlet.</p>
     </div>
     <?php
