@@ -5,6 +5,7 @@ Official [WordPress plugin](https://wordpress.org/plugins/gumlet/) to automatica
 
 * [Features](#features)
 * [Getting Started](#getting-started)
+* [Signed URLs](#signed-urls)
 * [Testing](#testing)
 
 <a name="features"></a>
@@ -17,6 +18,7 @@ Features
 * Use arbitrary [Gumlet API params](https://docs.gumlet.com/reference/image-formats) when editing `<img>` tags in "Text mode" and they will pass through.
 * No lock in! Disable the plugin and your images will be served as they were before installation.
 * Added support for Gumlet Video Embed.
+* Experimental [signed URLs](#signed-urls), with an optional expiry, so unsigned or modified image requests are rejected. Auto Resize stays off while this is enabled.
 
 Getting Started
 ---------------
@@ -30,3 +32,16 @@ Getting Started
 4. Return to the "Plugins" page and ensure the "gumlet plugin" is activated. Once activated, click the "settings" link and populate the "Gumlet Host" field (e.g., `https://yourcompany.gumlet.io`). This is the full host of the gumlet source you created in step #1. Optionally, you can also turn on `Auto Format` or `Auto Compress`. Finally, click "Save Options" when you're done.
 
 5. Go to a post on your WordPress blog and ensure your images are now serving through gumlet.
+
+<a name="signed-urls"></a>
+Signed URLs (experimental)
+--------------------------
+
+Use this when a client should not be able to reuse their Gumlet host, or change width and other parameters, and consume CDN bandwidth.
+
+1. In the Gumlet dashboard, open the image source and the Security tab. Turn on Secure URLs and copy the secure token. Leave the source setting off until the plugin is saving signatures, or existing images will return 403.
+2. In WordPress, open Settings → Gumlet → Experimental. Turn on Signed URLs, paste the token, and save.
+3. Expiry is optional. Leave it blank and signed URLs do not expire. Set a duration in seconds (3600 is one hour) to add Gumlet's `expires` timestamp. Gumlet rejects the URL after that and caches the image only until then. Keep any full-page cache shorter than this duration.
+4. Turn Secure URLs on for the source, then clear any page cache.
+
+Auto Resize does not run while Signed URLs is enabled. Gumlet.js adds the width in the browser after the URL is signed, and Gumlet rejects the changed URL. Images are served from the signed URL directly, and Gumlet.js lazy loading stays off. The token stays on the server.
