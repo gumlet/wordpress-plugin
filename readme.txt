@@ -148,6 +148,7 @@ If you need any help, you can reach out to us at support@gumlet.com.
 = 1.4.5 =
 * Experimental: Signed URLs. Image URLs are signed with the source secure token, with an optional expiry duration in seconds. Auto Resize stays off while this is enabled, because Gumlet.js would change the URL after it is signed.
 * Sign every Gumlet image URL, including images already on the Gumlet host, gallery links, and data-srcset. Previously only fetchpriority="high" images were signed.
+* With Signed URLs on, picture source srcset stays in place and each candidate is signed. Existing signatures are replaced, and ampersands stay literal inside style and script.
 
 = 1.4.4 =
 * Experimental things to enhance your user experience, checkout Plugin settings > Experimental

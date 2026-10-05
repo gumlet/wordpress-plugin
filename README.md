@@ -37,7 +37,7 @@ Getting Started
 Signed URLs (experimental)
 --------------------------
 
-Use this when a client should not be able to reuse their Gumlet host, or change width and other parameters, and consume CDN bandwidth. It follows the same idea as Imgix secure URLs.
+Use this when a client should not be able to reuse their Gumlet host, or change width and other parameters, and consume CDN bandwidth.
 
 1. In the Gumlet dashboard, open the image source and the Security tab. Turn on Secure URLs and copy the secure token. Leave the source setting off until the plugin is saving signatures, or existing images will return 403.
 2. In WordPress, open Settings → Gumlet → Experimental. Turn on Signed URLs, paste the token, and save.

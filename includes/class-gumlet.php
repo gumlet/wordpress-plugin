@@ -376,21 +376,82 @@ class Gumlet
         }
 
         $pattern = '#https?://' . preg_quote($gumlet_host, '#') . '/[^"\'\s>]*?\.(?:jpe?g|png|gif|svg|webp)(?:\?[^"\'\s>]*)?#i';
+        $count = 0;
 
-        return preg_replace_callback($pattern, function ($match) {
-            $raw = html_entity_decode($match[0], ENT_QUOTES | ENT_HTML5, 'UTF-8');
-            $query = parse_url($raw, PHP_URL_QUERY);
-            if (is_string($query) && preg_match('/(?:^|&)s=/', $query)) {
-                return $match[0];
-            }
-
+        return preg_replace_callback($pattern, function ($match) use ($content) {
+            $original = $match[0][0];
+            $raw = html_entity_decode($original, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            // Always re-sign. A stored s can belong to an old token or an expiry that has already passed.
             $signed = $this->replace_image_url($raw);
             if ($signed === $raw) {
-                return $match[0];
+                return $original;
+            }
+            // style and script contents are not HTML-decoded, so &amp; would be sent to Gumlet as the parameter name.
+            if ($this->html_offset_is_raw_text($content, $match[0][1])) {
+                return $signed;
             }
 
             return str_replace('&', '&amp;', $signed);
-        }, $content);
+        }, $content, -1, $count, PREG_OFFSET_CAPTURE);
+    }
+
+    /**
+     * True when the offset sits inside a style or script element.
+     *
+     * @param string $content
+     * @param int    $offset
+     * @return bool
+     */
+    protected function html_offset_is_raw_text($content, $offset)
+    {
+        $before = substr($content, 0, (int) $offset);
+
+        return $this->html_tag_is_open($before, 'style') || $this->html_tag_is_open($before, 'script');
+    }
+
+    /**
+     * @param string $before
+     * @param string $tag
+     * @return bool
+     */
+    protected function html_tag_is_open($before, $tag)
+    {
+        $open = strripos($before, '<' . $tag);
+        if ($open === false) {
+            return false;
+        }
+        $close = strripos($before, '</' . $tag);
+
+        return $close === false || $close < $open;
+    }
+
+    /**
+     * Rewrite each candidate in a srcset and keep its width or density descriptor.
+     *
+     * @param string $srcset
+     * @return string
+     */
+    protected function rewrite_srcset($srcset)
+    {
+        $rewritten = array();
+        foreach (explode(',', $srcset) as $part) {
+            $part = trim($part);
+            if ($part === '') {
+                continue;
+            }
+            if (!preg_match('/^(\S+)(?:\s+(.*))?$/', $part, $candidate)) {
+                $rewritten[] = $part;
+                continue;
+            }
+            $url = $candidate[1];
+            if (!parse_url($url, PHP_URL_HOST)) {
+                $url = self::absoluteUrl($url);
+            }
+            $url = $this->replace_image_url($url);
+            $rewritten[] = $url . (isset($candidate[2]) && $candidate[2] !== '' ? ' ' . $candidate[2] : '');
+        }
+
+        return implode(', ', $rewritten);
     } 
 
     public function replace_wc_gallery_thumbs($matches) {
@@ -552,8 +613,8 @@ class Gumlet
             $content = $this->replace_src_in_imgtag($matches, $content, $gumlet_host, $going_to_be_replaced_host, $excluded_urls, $is_s3_host);
         }
 
-        // now we will replace srcset in SOURCE tags to data-srcset.
-        if (preg_match_all('/<source\s[^>]*srcset=([\"\']??)([^\" >]*?)\1[^>]*>/iU', $content, $matches)) {
+        // Source srcset: Gumlet.js reads data-srcset. With Auto Resize off, keep a real srcset and sign each candidate.
+        if (preg_match_all('/<source\b(?:[^>"\']|"[^"]*"|\'[^\']*\')*>/i', $content, $matches)) {
             $content = $this->replace_srcset_in_source($matches,$content);
         }
 
@@ -851,8 +912,16 @@ class Gumlet
             if($sourceTag->length > 0){
                 $sourceTag = $sourceTag[0];
                 $src = $sourceTag->getAttribute('srcset');
-                $sourceTag->removeAttribute("srcset");
-                $sourceTag->setAttribute("data-srcset", $src);
+                if ($src === '') {
+                    continue;
+                }
+                if (!$this->is_auto_resize_enabled()) {
+                    $sourceTag->setAttribute("srcset", $this->rewrite_srcset($src));
+                    $sourceTag->removeAttribute("data-srcset");
+                } else {
+                    $sourceTag->removeAttribute("srcset");
+                    $sourceTag->setAttribute("data-srcset", $src);
+                }
                 $new_source_tag = $doc->saveHTML($sourceTag);
                 $content = str_replace($unconverted_img_tag, $new_source_tag, $content);
             }
