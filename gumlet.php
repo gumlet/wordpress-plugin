@@ -16,6 +16,7 @@
  * Requires PHP: 7.4
  * Author:      Gumlet
  * Text Domain: gumlet
+ * Domain Path: /languages
  * Author URI:  https://www.gumlet.com
  */
 
@@ -38,10 +39,17 @@ include('includes/class-gumlet.php');
 include('includes/options-page.php');
 
 
+function gumlet_load_textdomain()
+{
+    load_plugin_textdomain('gumlet', false, dirname(plugin_basename(__FILE__)) . '/languages');
+}
+
+add_action('plugins_loaded', 'gumlet_load_textdomain');
+
 function gumlet_plugin_admin_action_links($links, $file)
 {
     if ($file === plugin_basename(__FILE__)) {
-        $settings_link = '<a href="options-general.php?page=gumlet-options">Settings</a>';
+        $settings_link = '<a href="options-general.php?page=gumlet-options">' . esc_html__('Settings', 'gumlet') . '</a>';
         array_unshift($links, $settings_link);
     }
     return $links;
