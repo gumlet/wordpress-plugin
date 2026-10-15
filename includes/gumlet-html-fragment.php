@@ -18,5 +18,7 @@ function gumlet_normalize_html_fragment_for_dom($fragment)
     }
     // JSON encodes forward slashes in URLs as \/ — libxml needs real slashes.
     $fragment = str_replace('\\/', '/', $fragment);
-    return $fragment;
+    // loadHTML() assumes ISO-8859-1 unless told otherwise — declare UTF-8 so
+    // non-ASCII attribute text (alt, title) isn't double-encoded on saveHTML.
+    return '<?xml encoding="UTF-8">' . $fragment;
 }
